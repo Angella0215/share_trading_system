@@ -113,8 +113,24 @@ DROP TABLE IF EXISTS `investors`;
 CREATE TABLE `investors` (
   `investor_id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
-  `national_id` varchar(50) NOT NULL,
-  `address` varchar(255) DEFAULT NULL,
+  `firstname` varchar(50) NOT NULL,
+  `surname` varchar(50) NOT NULL,
+  `other_names` varchar(100) DEFAULT NULL,
+  `gender` enum('male','female','other') NOT NULL,
+  `phone_number` varchar(20) NOT NULL,
+  `national_id_number` varchar(50) NOT NULL,
+  `nationality` varchar(50) NOT NULL DEFAULT 'Malawian',
+  `meter_number` varchar(50) NOT NULL,
+  `utility_receipt_path` varchar(255) DEFAULT NULL,
+  `bank_statement_path` varchar(255) DEFAULT NULL,
+  `id_document_path` varchar(255) DEFAULT NULL,
+  `account_status` enum('pending','verified','rejected') DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `physical_address` varchar(255) DEFAULT NULL,
+  `postal_address` varchar(255) DEFAULT NULL,
+  `house_number` varchar(50) DEFAULT NULL,
+  `home_village` varchar(100) DEFAULT NULL,
+  `ta` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`investor_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `investors_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
@@ -322,4 +338,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-08  1:27:33
+-- Dump completed on 2026-08-10  1:17:39
