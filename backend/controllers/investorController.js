@@ -53,3 +53,37 @@ exports.openAccount = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getPendingApplications = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT i.*, u.email, u.fullname 
+             FROM investors i 
+             JOIN users u ON i.user_id = u.user_id 
+             WHERE i.account_status = 'pending'`
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.approveAccount = async (req, res) => {
+    const { investor_id } = req.params;
+    try {
+        await db.query('UPDATE investors SET account_status = ? WHERE investor_id = ?', ['verified', investor_id]);
+        res.status(200).json({ message: 'Investor account approved.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.rejectAccount = async (req, res) => {
+    const { investor_id } = req.params;
+    try {
+        await db.query('UPDATE investors SET account_status = ? WHERE investor_id = ?', ['rejected', investor_id]);
+        res.status(200).json({ message: 'Investor account rejected.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};

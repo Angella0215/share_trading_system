@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const investorController = require('../controllers/investorController');
 const upload = require('../config/upload');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
 router.post(
     '/open-account',
@@ -12,5 +13,9 @@ router.post(
     ]),
     investorController.openAccount
 );
+
+router.get('/pending', verifyToken, requireRole('broker', 'admin'), investorController.getPendingApplications);
+router.put('/:investor_id/approve', verifyToken, requireRole('broker', 'admin'), investorController.approveAccount);
+router.put('/:investor_id/reject', verifyToken, requireRole('broker', 'admin'), investorController.rejectAccount);
 
 module.exports = router;
