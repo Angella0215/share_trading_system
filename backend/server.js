@@ -1,9 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const db = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.use(express.json());
+app.use('/api', authRoutes);
 
 app.get('/', async (req, res) => {
     try {
