@@ -3,6 +3,7 @@ const express = require('express');
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const investorRoutes = require('./routes/investorRoutes');
+const companyRoutes = require('./routes/companyRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,6 +15,7 @@ app.use((req, res, next) => {
 });
 app.use('/api', authRoutes);
 app.use('/api/investors', investorRoutes);
+app.use('/api/companies', companyRoutes);
 
 app.get('/', async (req, res) => {
     try {
