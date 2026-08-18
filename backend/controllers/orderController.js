@@ -15,9 +15,16 @@ function calculateCommission(shareCost) {
 exports.createBuyOrder = async (req, res) => {
     const { investor_id, company_id, amount } = req.body;
 
-    if (!investor_id || !company_id || !amount) {
+   if (!investor_id || !company_id || !amount) {
         return res.status(400).json({ message: 'Please provide investor_id, company_id, and amount.' });
     }
+
+    if (!req.file) {
+        return res.status(400).json({ message: 'Please attach proof of payment.' });
+    }
+
+    const proofOfPaymentPath = req.file.path;
+
 
     try {
         const [investorRows] = await db.query('SELECT account_status FROM investors WHERE investor_id = ?', [investor_id]);
@@ -49,12 +56,14 @@ exports.createBuyOrder = async (req, res) => {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 14);
 
-        const [result] = await db.query(
+       const [result] = await db.query(
             `INSERT INTO buy_orders 
-            (investor_id, company_id, quantity, price, commission, vat, total_amount, expiry_date, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [investor_id, company_id, quantity, price, commission.toFixed(2), vat.toFixed(2), totalAmount.toFixed(2), expiryDate.toISOString().split('T')[0]]
-        );
+            (investor_id, company_id, quantity, price, commission, vat, total_amount, expiry_date, proof_of_payment_path, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [investor_id, company_id, quantity, price, commission.toFixed(2), vat.toFixed(2), totalAmount.toFixed(2), expiryDate.toISOString().split('T')[0], proofOfPaymentPath]
+        ); 
+
+
 
         res.status(201).json({
             message: 'Buy order submitted successfully.',
