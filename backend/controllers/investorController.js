@@ -6,6 +6,9 @@ exports.openAccount = async (req, res) => {
         firstname,
         surname,
         other_names,
+        date_of_birth,
+        marital_status,
+        spouse_full_name,
         gender,
         phone_number,
         physical_address,
@@ -13,13 +16,38 @@ exports.openAccount = async (req, res) => {
         house_number,
         home_village,
         ta,
+        district,
+        directions,
         national_id_number,
+        id_expiry_date,
         nationality,
-        meter_number
+        foreign_local,
+        residential_permit_type,
+        meter_number,
+        next_of_kin_name,
+        next_of_kin_phone,
+        next_of_kin_email,
+        next_of_kin_relationship,
+        employment_status,
+        employer_name,
+        designation,
+        employer_address,
+        years_self_employed,
+        business_type,
+        source_of_income,
+        expected_monthly_income,
+        bank_name,
+        bank_branch,
+        bank_account_type,
+        bank_account_number,
+        proof_of_residence_type,
+        account_type
     } = req.body;
 
     if (!user_id || !firstname || !surname || !gender || !phone_number ||
-        !physical_address || !national_id_number || !meter_number) {
+        !physical_address || !national_id_number || !meter_number ||
+        !next_of_kin_name || !next_of_kin_phone || !employment_status ||
+        !bank_name || !bank_account_number) {
         return res.status(400).json({ message: 'Please fill in all required fields.' });
     }
 
@@ -39,9 +67,23 @@ exports.openAccount = async (req, res) => {
 
         const [result] = await db.query(
             `INSERT INTO investors 
-            (user_id, firstname, surname, other_names, gender, phone_number, physical_address, postal_address, house_number, home_village, ta, national_id_number, nationality, meter_number, utility_receipt_path, bank_statement_path, id_document_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user_id, firstname, surname, other_names, gender, phone_number, physical_address, postal_address, house_number, home_village, ta, national_id_number, nationality || 'Malawian', meter_number, utility_receipt_path, bank_statement_path, id_document_path]
+            (user_id, firstname, surname, other_names, date_of_birth, marital_status, spouse_full_name, gender, phone_number, 
+             physical_address, postal_address, house_number, home_village, ta, district, directions,
+             national_id_number, id_expiry_date, nationality, foreign_local, residential_permit_type, meter_number,
+             next_of_kin_name, next_of_kin_phone, next_of_kin_email, next_of_kin_relationship,
+             employment_status, employer_name, designation, employer_address, years_self_employed, business_type, source_of_income,
+             expected_monthly_income, bank_name, bank_branch, bank_account_type, bank_account_number,
+             proof_of_residence_type, account_type,
+             utility_receipt_path, bank_statement_path, id_document_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user_id, firstname, surname, other_names, date_of_birth, marital_status, spouse_full_name, gender, phone_number,
+             physical_address, postal_address, house_number, home_village, ta, district, directions,
+             national_id_number, id_expiry_date, nationality || 'Malawian', foreign_local || 'local', residential_permit_type, meter_number,
+             next_of_kin_name, next_of_kin_phone, next_of_kin_email, next_of_kin_relationship,
+             employment_status, employer_name, designation, employer_address, years_self_employed || null, business_type, source_of_income,
+             expected_monthly_income, bank_name, bank_branch, bank_account_type, bank_account_number,
+             proof_of_residence_type, account_type || 'equity_trading',
+             utility_receipt_path, bank_statement_path, id_document_path]
         );
 
         res.status(201).json({
