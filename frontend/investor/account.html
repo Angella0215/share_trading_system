@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <span class="mark">SML</span>
+        Stockbrokers Malawi
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="account.html" class="active">My Account</a>
+        <a href="companies.html">Companies</a>
+        <a href="buy.html">Buy Shares</a>
+        <a href="sell.html">Sell Shares</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="orders.html">Order History</a>
+        <a href="messages.html">Messages</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="avatar" id="userAvatar">?</div>
+          <div>
+            <div class="name" id="userName">Loading...</div>
+            <div class="role">Investor</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>My Account</h1>
+          <p>Complete this form to open your equity trading account with Stockbrokers Malawi Limited.</p>
+        </div>
+        <span class="status-pill" id="accountStatusPill" style="display:none;"></span>
+      </div>
+
+      <div id="alreadySubmittedNotice" class="card" style="display:none; margin-bottom:24px;"></div>
+
+      <form id="accountForm" novalidate enctype="multipart/form-data">
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">A. Nature of account</div></div>
+          <div class="field">
+            <label for="account_type">Account type</label>
+            <select id="account_type" name="account_type">
+              <option value="equity_trading">Equity Trading account</option>
+              <option value="money_market">Money Market account</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">B. Personal details</div></div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="firstname">First name *</label>
+              <input type="text" id="firstname" name="firstname">
+            </div>
+            <div class="field">
+              <label for="surname">Surname *</label>
+              <input type="text" id="surname" name="surname">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="other_names">Other names</label>
+              <input type="text" id="other_names" name="other_names">
+            </div>
+            <div class="field">
+              <label for="gender">Gender *</label>
+              <select id="gender" name="gender">
+                <option value="">Select...</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="date_of_birth">Date of birth</label>
+              <input type="date" id="date_of_birth" name="date_of_birth">
+            </div>
+            <div class="field">
+              <label for="marital_status">Marital status</label>
+              <select id="marital_status" name="marital_status">
+                <option value="">Select...</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="spouse_full_name">Spouse's full name (if married)</label>
+            <input type="text" id="spouse_full_name" name="spouse_full_name">
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="nationality">Nationality</label>
+              <input type="text" id="nationality" name="nationality" value="Malawian">
+            </div>
+            <div class="field">
+              <label for="foreign_local">Foreign / Local investor</label>
+              <select id="foreign_local" name="foreign_local">
+                <option value="local">Local investor</option>
+                <option value="foreign">Foreign investor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" id="permitField" style="display:none;">
+            <label for="residential_permit_type">Nature of residential permit (if not Malawian)</label>
+            <input type="text" id="residential_permit_type" name="residential_permit_type">
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">C. Contact details</div></div>
+
+          <div class="field">
+            <label for="phone_number">Cell number *</label>
+            <input type="text" id="phone_number" name="phone_number" placeholder="09XXXXXXXX">
+          </div>
+
+          <div class="field">
+            <label for="postal_address">Postal address</label>
+            <input type="text" id="postal_address" name="postal_address">
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="physical_address">Physical / Residential address *</label>
+              <input type="text" id="physical_address" name="physical_address">
+            </div>
+            <div class="field">
+              <label for="house_number">House number</label>
+              <input type="text" id="house_number" name="house_number">
+            </div>
+          </div>
+ 
+          <div class="field-row">
+            <div class="field">
+              <label for="home_village">Village</label>
+              <input type="text" id="home_village" name="home_village">
+            </div>
+            <div class="field">
+              <label for="ta">Traditional Authority</label>
+              <input type="text" id="ta" name="ta">
+            </div>
+            <div class="field">
+              <label for="district">District</label>
+              <input type="text" id="district" name="district">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="directions">Directions to your home</label>
+            <textarea id="directions" name="directions" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">D. Next of kin</div></div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="next_of_kin_name">Full name *</label>
+              <input type="text" id="next_of_kin_name" name="next_of_kin_name">
+            </div>
+            <div class="field">
+              <label for="next_of_kin_relationship">Relationship</label>
+              <input type="text" id="next_of_kin_relationship" name="next_of_kin_relationship">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="next_of_kin_phone">Phone number *</label>
+              <input type="text" id="next_of_kin_phone" name="next_of_kin_phone">
+            </div>
+            <div class="field">
+              <label for="next_of_kin_email">Email address</label>
+              <input type="email" id="next_of_kin_email" name="next_of_kin_email">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">E. Occupation</div></div>
+
+          <div class="field">
+            <label for="employment_status">Employment status *</label>
+            <select id="employment_status" name="employment_status">
+              <option value="">Select...</option>
+              <option value="employed">Employed</option>
+              <option value="self_employed">Self-employed</option>
+              <option value="not_employed">Not employed / Student / Other</option>
+            </select>
+          </div>
+
+          <div id="employedFields" style="display:none;">
+            <div class="field-row">
+              <div class="field">
+                <label for="employer_name">Name of employer</label>
+                <input type="text" id="employer_name" name="employer_name">
+              </div>
+              <div class="field">
+                <label for="designation">Designation</label>
+                <input type="text" id="designation" name="designation">
+              </div>
+            </div>
+            <div class="field">
+              <label for="employer_address">Employer's address</label>
+              <input type="text" id="employer_address" name="employer_address">
+            </div>
+          </div>
+
+          <div id="selfEmployedFields" style="display:none;">
+            <div class="field-row">
+              <div class="field">
+                <label for="years_self_employed">Number of years self-employed</label>
+                <input type="number" id="years_self_employed" name="years_self_employed" min="0">
+              </div>
+              <div class="field">
+                <label for="business_type">Type of business</label>
+                <input type="text" id="business_type" name="business_type">
+              </div>
+            </div>
+          </div>
+
+          <div id="notEmployedFields" style="display:none;">
+            <div class="field">
+              <label for="source_of_income">Source of income</label>
+              <input type="text" id="source_of_income" name="source_of_income">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">F. Identification</div></div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="national_id_number">National ID number *</label>
+              <input type="text" id="national_id_number" name="national_id_number">
+            </div>
+            <div class="field">
+              <label for="id_expiry_date">ID expiry date</label>
+              <input type="date" id="id_expiry_date" name="id_expiry_date">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">G. Expected income & banking details</div></div>
+
+          <div class="field">
+            <label for="expected_monthly_income">Expected monthly income</label>
+            <select id="expected_monthly_income" name="expected_monthly_income">
+              <option value="below_300k">K300,000 and below</option>
+              <option value="300k_to_5m">Above K300,000 and below K5 million</option>
+              <option value="above_5m">Above K5 million</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="bank_name">Bank name *</label>
+              <input type="text" id="bank_name" name="bank_name">
+            </div>
+            <div class="field">
+              <label for="bank_branch">Branch name</label>
+              <input type="text" id="bank_branch" name="bank_branch">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="bank_account_type">Account type</label>
+              <input type="text" id="bank_account_type" name="bank_account_type" placeholder="e.g. Savings">
+            </div>
+            <div class="field">
+              <label for="bank_account_number">Account number *</label>
+              <input type="text" id="bank_account_number" name="bank_account_number">
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">H. Proof of residence</div></div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="proof_of_residence_type">Utility type *</label>
+              <select id="proof_of_residence_type" name="proof_of_residence_type">
+                <option value="">Select...</option>
+                <option value="escom">ESCOM</option>
+                <option value="water_board">Water Board</option>
+                <option value="mtl">MTL</option>
+                <option value="city_ground_rates">City / Ground Rates</option>
+                <option value="mhc_invoice">MHC Invoice</option>
+                <option value="other">Other Utility</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="meter_number">Meter / Bill account number *</label>
+              <input type="text" id="meter_number" name="meter_number">
+              <div class="hint">Must match the number on your uploaded receipt below.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header"><div class="card-title">Required documents</div></div>
+
+          <div class="field">
+            <label for="utility_receipt">Utility bill / receipt *</label>
+            <input type="file" id="utility_receipt" name="utility_receipt" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="field">
+            <label for="bank_statement">Bank statement *</label>
+            <input type="file" id="bank_statement" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          <div class="field">
+            <label for="id_document">Copy of National ID *</label>
+            <input type="file" id="id_document" name="id_document" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+        </div>
+
+        <div class="alert alert-error" id="errorAlert"></div>
+        <div class="alert alert-success" id="successAlert"></div>
+
+        <button type="submit" class="btn btn-primary" id="submitBtn">Submit application</button>
+      </form>
+    </main>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/session.js"></script>
+  <script src="../js/account.js"></script>
+</body>
+</html>
