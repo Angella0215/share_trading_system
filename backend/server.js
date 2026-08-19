@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');  // <-- ADD THIS LINE
 const db = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const investorRoutes = require('./routes/investorRoutes');
@@ -10,11 +11,14 @@ const messageRoutes = require('./routes/messageRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+app.use(cors());  // <-- ADD THIS LINE
 app.use(express.json());
+
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
     next();
 });
+
 app.use('/api', authRoutes);
 app.use('/api/investors', investorRoutes);
 app.use('/api/companies', companyRoutes);

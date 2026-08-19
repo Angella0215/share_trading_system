@@ -17,5 +17,6 @@ router.post(
 router.get('/pending', verifyToken, requireRole('broker', 'admin'), investorController.getPendingApplications);
 router.put('/:investor_id/approve', verifyToken, requireRole('broker', 'admin'), investorController.approveAccount);
 router.put('/:investor_id/reject', verifyToken, requireRole('broker', 'admin'), investorController.rejectAccount);
+router.get('/me', verifyToken, requireRole('investor'), investorController.getMyAccount);
 
 module.exports = router;

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create account - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">
+    </div>
+  </div>
+
+  <nav class="navbar">
+    <div class="brand-logo">
+      <span class="mark">SML</span>
+      Stockbrokers Malawi
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Log in</a>
+      <a href="register.html" class="btn btn-outline" style="padding:9px 18px;">Create account</a>
+    </div>
+  </nav>
+
+  <main class="auth-shell">
+    <section class="auth-visual">
+      <div class="eyebrow">A subsidiary of National Bank of Malawi</div>
+      <h1>Open your investor account in minutes.</h1>
+      <p>Create your login first. Once verified, you'll complete a short account-opening form to start trading on the Malawi Stock Exchange through Stockbrokers Malawi Limited.</p>
+      <div class="stat-row">
+        <div>
+          <div class="stat-label">MSE companies</div>
+          <div class="stat-value">16</div>
+        </div>
+        <div>
+          <div class="stat-label">Settlement</div>
+          <div class="stat-value">T+3</div>
+        </div>
+        <div>
+          <div class="stat-label">CSD held at</div>
+          <div class="stat-value" style="font-size:15px;">Reserve Bank</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-form-side">
+      <div class="form-header">
+        <h2>Create your account</h2>
+        <p>Step 1 of 2 - your login details. Investor account setup comes next.</p>
+      </div>
+
+      <div class="alert alert-error" id="errorAlert"></div>
+      <div class="alert alert-success" id="successAlert"></div>
+
+      <form id="registerForm" novalidate>
+        <div class="field">
+          <label for="fullname">Full name</label>
+          <input type="text" id="fullname" name="fullname" placeholder="Your full name">
+        </div>
+
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone number</label>
+          <input type="text" id="phone" name="phone" placeholder="09XXXXXXXX">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="At least 6 characters" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="confirmPassword">Confirm password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repeat password" autocomplete="new-password">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="registerBtn">Create account</button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account? <a href="index.html">Log in</a>
+      </p>
+    </section>
+  </main>
+
+  <script src="js/ticker.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

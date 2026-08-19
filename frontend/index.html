@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stockbrokers Malawi Limited - MSE Trading Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Top Bar - Contact & Quick Info -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-left">
+                <span><i class="fas fa-phone"></i> +265 1 825 000</span>
+                <span><i class="fas fa-envelope"></i> info@stockbrokers.mw</span>
+                <span><i class="fas fa-clock"></i> Market Hours: 9:00 AM - 4:00 PM (Mon-Fri)</span>
+            </div>
+            <div class="top-bar-right">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticker Strip -->
+    <div class="ticker-wrap">
+        <div class="ticker" id="ticker">
+            Loading market prices...
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="brand-logo">
+                <span class="mark">SML</span>
+                <div class="brand-text">
+                    <span class="brand-name">Stockbrokers Malawi</span>
+                    <span class="brand-sub">Member of the MSE</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
+                <a href="about.html">About</a>
+                <a href="services.html">Services</a>
+                <a href="contact.html">Contact</a>
+                <a href="register.html" class="btn btn-outline">Create Account</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Auth Section -->
+    <main class="auth-shell">
+        <section class="auth-visual">
+            <div class="eyebrow">
+                <i class="fas fa-building"></i> A subsidiary of National Bank of Malawi
+            </div>
+            <h1>Your Trusted Broker for the Malawi Stock Exchange</h1>
+            <p>Stockbrokers Malawi Limited executes your trades on the MSE - buy and sell shares in Airtel Malawi, NBM, TNM, MPICO and 12 other listed companies, with portfolio tracking and direct support from your broker.</p>
+            
+            <!-- Market Stats -->
+            <div class="stat-row">
+                <div>
+                    <div class="stat-label">Listed Companies</div>
+                    <div class="stat-value">16</div>
+                </div>
+                <div>
+                    <div class="stat-label">Settlement</div>
+                    <div class="stat-value">T+3</div>
+                </div>
+                <div>
+                    <div class="stat-label">CSD Held At</div>
+                    <div class="stat-value" style="font-size:15px;">Reserve Bank of Malawi</div>
+                </div>
+                <div>
+                    <div class="stat-label">Market Cap</div>
+                    <div class="stat-value">MK 18.5T</div>
+                </div>
+            </div>
+
+            <!-- Quick Market Snapshot -->
+            <div class="market-snapshot">
+                <h3><i class="fas fa-chart-line"></i> Market Snapshot</h3>
+                <div class="snapshot-grid" id="marketSnapshot">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <section class="auth-form-side">
+            <div class="form-header">
+                <h2>Welcome Back</h2>
+                <p>Log in to manage your portfolio and place orders.</p>
+            </div>
+
+            <div class="alert alert-error" id="errorAlert"></div>
+
+            <form id="loginForm" novalidate>
+                <div class="field" id="emailField">
+                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+                    <div class="error">Enter a valid email address.</div>
+                </div>
+
+                <div class="field" id="passwordField">
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password">
+                    <div class="error">Enter your password.</div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe"> Remember me
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Log in
+                </button>
+            </form>
+
+            <p class="auth-switch">
+                Don't have an account? <a href="register.html">Create one</a>
+            </p>
+
+            <div class="auth-footer">
+                <p><i class="fas fa-shield-alt"></i> Secure trading platform with 256-bit encryption</p>
+                <p><i class="fas fa-headset"></i> 24/7 Broker Support Available</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>Stockbrokers Malawi Limited</h4>
+                    <p>A leading stock brokerage firm in Malawi, providing comprehensive investment services on the Malawi Stock Exchange.</p>
+                    <div class="footer-social">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="register.html">Open Account</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact Us</h4>
+                    <ul class="contact-info">
+                        <li><i class="fas fa-map-marker-alt"></i> Victoria Avenue, Blantyre, Malawi</li>
+                        <li><i class="fas fa-phone"></i> +265 1 825 000</li>
+                        <li><i class="fas fa-envelope"></i> info@stockbrokers.mw</li>
+                        <li><i class="fas fa-clock"></i> Mon-Fri: 8:00 AM - 5:00 PM</li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Subscribe</h4>
+                    <p>Get market insights and updates</p>
+                    <form id="subscribeForm">
+                        <input type="email" placeholder="Your email" required>
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Stockbrokers Malawi Limited. All rights reserved.</p>
+                <p>
+                    <a href="#">Privacy Policy</a> | 
+                    <a href="#">Terms & Conditions</a> | 
+                    <a href="#">Cookie Policy</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/ticker.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

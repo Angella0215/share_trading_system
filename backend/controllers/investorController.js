@@ -129,3 +129,36 @@ exports.rejectAccount = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getMyAccount = async (req, res) => {
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT * FROM investors WHERE user_id = ?', [user_id]);
+
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found. Please complete account opening.' });
+        }
+
+        const investor = investorRows[0];
+
+        const [portfolioRows] = await db.query(
+            `SELECT p.company_id, p.shares_owned, c.company_name, c.ticker, c.current_price
+             FROM portfolio p
+             JOIN companies c ON p.company_id = c.company_id
+             WHERE p.investor_id = ?`,
+            [investor.investor_id]
+        );
+
+        res.status(200).json({
+            investor_id: investor.investor_id,
+            account_status: investor.account_status,
+            firstname: investor.firstname,
+            surname: investor.surname,
+            portfolio: portfolioRows
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
