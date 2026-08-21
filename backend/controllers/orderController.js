@@ -290,3 +290,37 @@ exports.getMyOrders = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getPendingBuyOrders = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT bo.*, c.company_name, c.ticker, i.firstname, i.surname, u.email
+             FROM buy_orders bo
+             JOIN companies c ON bo.company_id = c.company_id
+             JOIN investors i ON bo.investor_id = i.investor_id
+             JOIN users u ON i.user_id = u.user_id
+             WHERE bo.status = 'pending'
+             ORDER BY bo.created_at ASC`
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.getPendingSellOrders = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT so.*, c.company_name, c.ticker, i.firstname, i.surname, u.email
+             FROM sell_orders so
+             JOIN companies c ON so.company_id = c.company_id
+             JOIN investors i ON so.investor_id = i.investor_id
+             JOIN users u ON i.user_id = u.user_id
+             WHERE so.status = 'pending'
+             ORDER BY so.created_at ASC`
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
