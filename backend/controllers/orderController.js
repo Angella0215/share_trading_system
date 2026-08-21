@@ -244,3 +244,49 @@ exports.approveSellOrder = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getMyOrders = async (req, res) => {
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT investor_id FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor_id = investorRows[0].investor_id;
+
+        const [buyOrders] = await db.query(
+            `SELECT order_id AS id, 'buy' AS type, company_id, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
+             FROM buy_orders WHERE investor_id = ?`,
+            [investor_id]
+        );
+
+        const [sellOrders] = await db.query(
+            `SELECT sell_id AS id, 'sell' AS type, company_id, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
+             FROM sell_orders WHERE investor_id = ?`,
+            [investor_id]
+        );
+
+        const allOrders = buyOrders.concat(sellOrders);
+
+        // Attach company names/tickers so the frontend doesn't need a second lookup.
+        const [companies] = await db.query('SELECT company_id, company_name, ticker FROM companies');
+        const companyMap = {};
+        companies.forEach(function (c) { companyMap[c.company_id] = c; });
+
+        const enriched = allOrders.map(function (o) {
+            const company = companyMap[o.company_id] || {};
+            return Object.assign({}, o, {
+                company_name: company.company_name || 'Unknown',
+                ticker: company.ticker || '-'
+            });
+        });
+
+        enriched.sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+
+        res.status(200).json(enriched);
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};

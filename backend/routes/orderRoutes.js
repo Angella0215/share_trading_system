@@ -8,5 +8,6 @@ router.post('/buy', verifyToken, requireRole('investor'), upload.single('proof_o
 router.put('/buy/:order_id/approve', verifyToken, requireRole('broker', 'admin'), orderController.approveBuyOrder);
 router.post('/sell', verifyToken, requireRole('investor'), orderController.createSellOrder);
 router.put('/sell/:sell_id/approve', verifyToken, requireRole('broker', 'admin'), orderController.approveSellOrder);
+router.get('/my-orders', verifyToken, requireRole('investor'), orderController.getMyOrders);
 
 module.exports = router;
