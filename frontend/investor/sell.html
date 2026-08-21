@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sell Shares - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <span class="mark">SML</span>
+        Stockbrokers Malawi
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="account.html">My Account</a>
+        <a href="companies.html">Companies</a>
+        <a href="buy.html">Buy Shares</a>
+        <a href="sell.html" class="active">Sell Shares</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="orders.html">Order History</a>
+        <a href="messages.html">Messages</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="avatar" id="userAvatar">?</div>
+          <div>
+            <div class="name" id="userName">Loading...</div>
+            <div class="role">Investor</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Sell Shares</h1>
+          <p>Sell shares you currently own. Commission, VAT and fees are deducted from your proceeds.</p>
+        </div>
+      </div>
+
+      <div id="blockedNotice" class="card" style="display:none; margin-bottom:24px;"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 380px; gap: 24px; align-items:start;">
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Order details</div></div>
+
+          <form id="sellForm" novalidate>
+            <div class="field">
+              <label for="company_id">Company *</label>
+              <select id="company_id" name="company_id">
+                <option value="">Select a company you own shares in...</option>
+              </select>
+              <div class="hint" id="ownedHint"></div>
+            </div>
+
+            <div class="field">
+              <label for="quantity">Number of shares to sell *</label>
+              <input type="number" id="quantity" name="quantity" min="1" step="1" placeholder="e.g. 100">
+            </div>
+
+            <div class="alert alert-error" id="errorAlert"></div>
+            <div class="alert alert-success" id="successAlert"></div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="sellBtn">Submit sell order</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Order summary</div></div>
+          <div id="orderSummary">
+            <div class="empty-state">Select a company and enter a quantity to see the breakdown.</div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/session.js"></script>
+  <script src="../js/sell.js"></script>
+</body>
+</html>
