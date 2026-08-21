@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());  // <-- ADD THIS LINE
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
