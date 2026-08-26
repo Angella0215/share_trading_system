@@ -98,3 +98,14 @@ exports.getInvestors = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getAllUsers = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT user_id, fullname, email, role, status, created_at FROM users ORDER BY created_at DESC'
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};

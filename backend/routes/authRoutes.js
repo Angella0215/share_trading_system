@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { verifyToken } = require('../middleware/authMiddleware');
+const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/brokers', verifyToken, authController.getBrokers);
 router.get('/investors-list', verifyToken, authController.getInvestors);
+router.get('/users', verifyToken, requireRole('admin'), authController.getAllUsers);
 
 module.exports = router;
