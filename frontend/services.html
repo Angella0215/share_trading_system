@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Services - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">Loading market prices...</div>
+  </div>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="brand-logo">
+        <span class="mark">SML</span>
+        <div class="brand-text">
+          <span class="brand-name">Stockbrokers Malawi</span>
+          <span class="brand-sub">Member of the MSE</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html" class="active">Services</a>
+        <a href="contact.html">Contact</a>
+        <a href="register.html" class="btn btn-outline">Create Account</a>
+      </div>
+    </div>
+  </nav>
+
+  <main style="max-width:1000px; margin:0 auto; padding:56px 24px;">
+    <h1 style="font-size:34px; margin-bottom:12px;">Our Services</h1>
+    <p style="font-size:15.5px; color:var(--slate); margin-bottom:40px; max-width:650px;">
+      Everything you need to trade on the Malawi Stock Exchange, from account opening to portfolio management.
+    </p>
+
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:24px;">
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-user-plus" style="color:var(--brand); margin-right:8px;"></i>Equity Trading Accounts</div></div>
+        <p style="font-size:14px; color:var(--slate); line-height:1.6;">
+          We open and manage Equity Trading and Money Market accounts, linked to a Central Securities Depository (CSD) account at the Reserve Bank of Malawi, so you can hold shares securely in your own name.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-exchange-alt" style="color:var(--brand); margin-right:8px;"></i>Buy & Sell Orders</div></div>
+        <p style="font-size:14px; color:var(--slate); line-height:1.6;">
+          We execute buy and sell orders on your behalf on the MSE, on a first-come-first-served basis, with each order valid for 14 days and settled on a T+3 basis.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-briefcase" style="color:var(--brand); margin-right:8px;"></i>Portfolio Management</div></div>
+        <p style="font-size:14px; color:var(--slate); line-height:1.6;">
+          Track your holdings across all 16 MSE-listed companies in one place, with real-time valuations based on the latest published prices.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-comments" style="color:var(--brand); margin-right:8px;"></i>Broker Support</div></div>
+        <p style="font-size:14px; color:var(--slate); line-height:1.6;">
+          Message your broker directly through the platform with any questions about your orders, account, or the market.
+        </p>
+      </div>
+
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-header"><div class="card-title">Commission Structure</div></div>
+      <table class="data-table">
+        <thead><tr><th>Proceeds</th><th>Commission</th></tr></thead>
+        <tbody>
+          <tr><td>K50,000 and below</td><td class="mono">2%</td></tr>
+          <tr><td>Above K50,000, up to K100,000</td><td class="mono">1.5%</td></tr>
+          <tr><td>Above K100,000</td><td class="mono">1%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px; color:var(--slate); margin-top:12px;">
+        A flat charge of K50 and VAT at the prevailing rate apply to all transactions in addition to commission.
+      </p>
+    </div>
+  </main>
+
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>Stockbrokers Malawi Limited</h4>
+          <p>A leading stock brokerage firm in Malawi, providing comprehensive investment services on the Malawi Stock Exchange.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="register.html">Open Account</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contact Us</h4>
+          <ul class="contact-info">
+            <li><i class="fas fa-map-marker-alt"></i> Victoria Avenue, Blantyre, Malawi</li>
+            <li><i class="fas fa-phone"></i> +265 1 825 000</li>
+            <li><i class="fas fa-envelope"></i> info@stockbrokers.mw</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Stockbrokers Malawi Limited. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/ticker.js"></script>
+</body>
+</html>
