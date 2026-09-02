@@ -11,6 +11,18 @@ function calculateCommission(shareCost) {
     }
     return commission;
 }
+function addBusinessDays(startDate, days) {
+    const result = new Date(startDate);
+    let added = 0;
+    while (added < days) {
+        result.setDate(result.getDate() + 1);
+        const dayOfWeek = result.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            added++;
+        }
+    }
+    return result;
+}
 
 exports.createBuyOrder = async (req, res) => {
     const { investor_id, company_id, amount } = req.body;
@@ -121,9 +133,11 @@ exports.approveBuyOrder = async (req, res) => {
             );
         }
 
+         const settlementDate = addBusinessDays(new Date(), 3);
+
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'buy', order.quantity, order.price]
+            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date) VALUES (?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0]]
         );
 
         res.status(200).json({ message: 'Buy order approved. Shares added to investor portfolio.' });
@@ -233,9 +247,11 @@ exports.approveSellOrder = async (req, res) => {
             [order.quantity, order.investor_id, order.company_id]
         );
 
+        const settlementDate = addBusinessDays(new Date(), 3);
+
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'sell', order.quantity, order.price]
+            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date) VALUES (?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0]]
         );
 
         res.status(200).json({ message: 'Sell order approved. Shares deducted from investor portfolio.' });
