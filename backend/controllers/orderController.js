@@ -367,3 +367,73 @@ exports.getMyTransactions = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.cancelBuyOrder = async (req, res) => {
+    const { order_id } = req.params;
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT investor_id FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor_id = investorRows[0].investor_id;
+
+        const [orderRows] = await db.query('SELECT * FROM buy_orders WHERE order_id = ?', [order_id]);
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.investor_id !== investor_id) {
+            return res.status(403).json({ message: 'You can only cancel your own orders.' });
+        }
+
+        if (order.status !== 'pending') {
+            return res.status(400).json({ message: `This order is already ${order.status} and cannot be cancelled.` });
+        }
+
+        await db.query('UPDATE buy_orders SET status = ? WHERE order_id = ?', ['rejected', order_id]);
+
+        res.status(200).json({ message: 'Buy order cancelled. Please contact your broker regarding your deposited funds.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.cancelSellOrder = async (req, res) => {
+    const { sell_id } = req.params;
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT investor_id FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor_id = investorRows[0].investor_id;
+
+        const [orderRows] = await db.query('SELECT * FROM sell_orders WHERE sell_id = ?', [sell_id]);
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.investor_id !== investor_id) {
+            return res.status(403).json({ message: 'You can only cancel your own orders.' });
+        }
+
+        if (order.status !== 'pending') {
+            return res.status(400).json({ message: `This order is already ${order.status} and cannot be cancelled.` });
+        }
+
+        await db.query('UPDATE sell_orders SET status = ? WHERE sell_id = ?', ['rejected', sell_id]);
+
+        res.status(200).json({ message: 'Sell order cancelled.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};

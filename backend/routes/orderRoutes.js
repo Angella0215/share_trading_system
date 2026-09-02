@@ -12,5 +12,7 @@ router.get('/my-orders', verifyToken, requireRole('investor'), orderController.g
 router.get('/buy/pending', verifyToken, requireRole('broker', 'admin'), orderController.getPendingBuyOrders);
 router.get('/sell/pending', verifyToken, requireRole('broker', 'admin'), orderController.getPendingSellOrders);
 router.get('/my-transactions', verifyToken, requireRole('investor'), orderController.getMyTransactions);
+router.put('/buy/:order_id/cancel', verifyToken, requireRole('investor'), orderController.cancelBuyOrder);
+router.put('/sell/:sell_id/cancel', verifyToken, requireRole('investor'), orderController.cancelSellOrder);
 
 module.exports = router;
