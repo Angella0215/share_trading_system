@@ -340,3 +340,30 @@ exports.getPendingSellOrders = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+
+exports.getMyTransactions = async (req, res) => {
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT investor_id FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor_id = investorRows[0].investor_id;
+
+        const [rows] = await db.query(
+            `SELECT t.transaction_id, t.type, t.quantity, t.price, t.transaction_date, t.settlement_date, c.company_name, c.ticker
+             FROM transactions t
+             JOIN companies c ON t.company_id = c.company_id
+             WHERE t.investor_id = ?
+             ORDER BY t.transaction_date DESC`,
+            [investor_id]
+        );
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
