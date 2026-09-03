@@ -39,10 +39,10 @@ async function loadOrders() {
 
 function renderTable(orders) {
     const wrap = document.getElementById('ordersTableWrap');
-
     let html = '<table class="data-table"><thead><tr>' +
-        '<th>Date</th><th>Type</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Status</th>' +
+        '<th>Date</th><th>Type</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Status</th><th></th>' +
         '</tr></thead><tbody>';
+   
 
     orders.forEach(function (o) {
         const date = new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -58,10 +58,35 @@ function renderTable(orders) {
             '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
             '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
             '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
-            '<td><span class="status-pill status-' + o.status + '">' + o.status.charAt(0).toUpperCase() + o.status.slice(1) + '</span></td>' +
-            '</tr>';
+                   '<td><span class="status-pill status-' + o.status + '">' + o.status.charAt(0).toUpperCase() + o.status.slice(1) + '</span></td>' +
+            '<td>' + (o.status === 'pending' ? '<button class="btn btn-danger btn-sm" onclick="cancelOrder(' + o.id + ', \'' + o.type + '\')">Cancel</button>' : '') + '</td>' +
+            '</tr>';     
     });
 
     html += '</tbody></table>';
     wrap.innerHTML = html;
+}
+async function cancelOrder(id, type) {
+    if (!confirm('Are you sure you want to cancel this order?')) return;
+
+    const endpoint = type === 'buy' ? '/orders/buy/' + id + '/cancel' : '/orders/sell/' + id + '/cancel';
+
+    try {
+        const res = await fetch(API_BASE + endpoint, {
+            method: 'PUT',
+            headers: getAuthHeaders()
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert(data.message);
+            loadOrders();
+        } else {
+            alert(data.message || 'Cancellation failed.');
+        }
+
+    } catch (err) {
+        alert('Could not reach the server.');
+    }
 }
