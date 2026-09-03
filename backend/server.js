@@ -7,7 +7,7 @@ const investorRoutes = require('./routes/investorRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
-
+const statementRoutes = require('./routes/statementRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -25,6 +25,7 @@ app.use('/api/investors', investorRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/statements', statementRoutes);
 
 app.get('/', async (req, res) => {
     try {
