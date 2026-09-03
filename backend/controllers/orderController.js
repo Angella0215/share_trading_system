@@ -100,10 +100,9 @@ exports.createBuyOrder = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
-exports.approveBuyOrder = async (req, res) => {
+exports.firstApproveBuyOrder = async (req, res) => {
     const { order_id } = req.params;
-    const broker_id = req.user.user_id;
+    const approver_id = req.user.user_id;
 
     try {
         const [orderRows] = await db.query('SELECT * FROM buy_orders WHERE order_id = ?', [order_id]);
@@ -118,8 +117,40 @@ exports.approveBuyOrder = async (req, res) => {
         }
 
         await db.query(
+            'UPDATE buy_orders SET status = ?, first_approver_id = ?, first_approved_at = NOW() WHERE order_id = ?',
+            ['first_approved', approver_id, order_id]
+        );
+
+        res.status(200).json({ message: 'Order has first-level approval. A second approver must confirm before it is finalized.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.finalApproveBuyOrder = async (req, res) => {
+    const { order_id } = req.params;
+    const final_approver_id = req.user.user_id;
+
+    try {
+        const [orderRows] = await db.query('SELECT * FROM buy_orders WHERE order_id = ?', [order_id]);
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.status !== 'first_approved') {
+            return res.status(400).json({ message: 'This order needs first-level approval before it can be finalized.' });
+        }
+
+        if (order.first_approver_id === final_approver_id) {
+            return res.status(403).json({ message: 'The final approver must be different from the first approver (maker-checker control).' });
+        }
+
+        await db.query(
             'UPDATE buy_orders SET status = ?, broker_id = ? WHERE order_id = ?',
-            ['approved', broker_id, order_id]
+            ['approved', final_approver_id, order_id]
         );
 
         const [existingPortfolio] = await db.query(
@@ -138,6 +169,7 @@ exports.approveBuyOrder = async (req, res) => {
                 [order.investor_id, order.company_id, order.quantity]
             );
         }
+
         const settlementDate = addBusinessDays(new Date(), 3);
         const dealNoteNumber = generateDealNoteNumber();
 
@@ -146,13 +178,13 @@ exports.approveBuyOrder = async (req, res) => {
             [order.investor_id, order.company_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Buy order approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
-
+        res.status(200).json({ message: 'Buy order fully approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
 
 exports.createSellOrder = async (req, res) => {
     const { investor_id, company_id, quantity } = req.body;
@@ -218,10 +250,9 @@ exports.createSellOrder = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
-exports.approveSellOrder = async (req, res) => {
+exports.firstApproveSellOrder = async (req, res) => {
     const { sell_id } = req.params;
-    const broker_id = req.user.user_id;
+    const approver_id = req.user.user_id;
 
     try {
         const [orderRows] = await db.query('SELECT * FROM sell_orders WHERE sell_id = ?', [sell_id]);
@@ -235,6 +266,38 @@ exports.approveSellOrder = async (req, res) => {
             return res.status(400).json({ message: `This order is already ${order.status}.` });
         }
 
+        await db.query(
+            'UPDATE sell_orders SET status = ?, first_approver_id = ?, first_approved_at = NOW() WHERE sell_id = ?',
+            ['first_approved', approver_id, sell_id]
+        );
+
+        res.status(200).json({ message: 'Order has first-level approval. A second approver must confirm before it is finalized.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.finalApproveSellOrder = async (req, res) => {
+    const { sell_id } = req.params;
+    const final_approver_id = req.user.user_id;
+
+    try {
+        const [orderRows] = await db.query('SELECT * FROM sell_orders WHERE sell_id = ?', [sell_id]);
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.status !== 'first_approved') {
+            return res.status(400).json({ message: 'This order needs first-level approval before it can be finalized.' });
+        }
+
+        if (order.first_approver_id === final_approver_id) {
+            return res.status(403).json({ message: 'The final approver must be different from the first approver (maker-checker control).' });
+        }
+
         const [portfolioRows] = await db.query(
             'SELECT shares_owned FROM portfolio WHERE investor_id = ? AND company_id = ?',
             [order.investor_id, order.company_id]
@@ -246,7 +309,7 @@ exports.approveSellOrder = async (req, res) => {
 
         await db.query(
             'UPDATE sell_orders SET status = ?, broker_id = ? WHERE sell_id = ?',
-            ['approved', broker_id, sell_id]
+            ['approved', final_approver_id, sell_id]
         );
 
         await db.query(
@@ -254,7 +317,7 @@ exports.approveSellOrder = async (req, res) => {
             [order.quantity, order.investor_id, order.company_id]
         );
 
-                const settlementDate = addBusinessDays(new Date(), 3);
+        const settlementDate = addBusinessDays(new Date(), 3);
         const dealNoteNumber = generateDealNoteNumber();
 
         await db.query(
@@ -262,12 +325,12 @@ exports.approveSellOrder = async (req, res) => {
             [order.investor_id, order.company_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Sell order approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
+        res.status(200).json({ message: 'Sell order fully approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
+
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
 exports.getMyOrders = async (req, res) => {
     const user_id = req.user.user_id;
 
@@ -292,7 +355,6 @@ exports.getMyOrders = async (req, res) => {
 
         const allOrders = buyOrders.concat(sellOrders);
 
-        // Attach company names/tickers so the frontend doesn't need a second lookup.
         const [companies] = await db.query('SELECT company_id, company_name, ticker FROM companies');
         const companyMap = {};
         companies.forEach(function (c) { companyMap[c.company_id] = c; });
@@ -313,6 +375,7 @@ exports.getMyOrders = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
 
 exports.getPendingBuyOrders = async (req, res) => {
     try {
