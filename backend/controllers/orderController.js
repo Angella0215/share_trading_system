@@ -23,6 +23,12 @@ function addBusinessDays(startDate, days) {
     }
     return result;
 }
+function generateDealNoteNumber() {
+    const now = new Date();
+    const datePart = now.toISOString().split('T')[0].replace(/-/g, '');
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    return 'SML-DN-' + datePart + '-' + randomPart;
+}
 
 exports.createBuyOrder = async (req, res) => {
     const { investor_id, company_id, amount } = req.body;
@@ -132,15 +138,16 @@ exports.approveBuyOrder = async (req, res) => {
                 [order.investor_id, order.company_id, order.quantity]
             );
         }
-
-         const settlementDate = addBusinessDays(new Date(), 3);
+        const settlementDate = addBusinessDays(new Date(), 3);
+        const dealNoteNumber = generateDealNoteNumber();
 
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date) VALUES (?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0]]
+            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Buy order approved. Shares added to investor portfolio.' });
+        res.status(200).json({ message: 'Buy order approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
+
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
@@ -247,15 +254,15 @@ exports.approveSellOrder = async (req, res) => {
             [order.quantity, order.investor_id, order.company_id]
         );
 
-        const settlementDate = addBusinessDays(new Date(), 3);
+                const settlementDate = addBusinessDays(new Date(), 3);
+        const dealNoteNumber = generateDealNoteNumber();
 
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date) VALUES (?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0]]
+            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Sell order approved. Shares deducted from investor portfolio.' });
-
+        res.status(200).json({ message: 'Sell order approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
@@ -432,6 +439,51 @@ exports.cancelSellOrder = async (req, res) => {
         await db.query('UPDATE sell_orders SET status = ? WHERE sell_id = ?', ['rejected', sell_id]);
 
         res.status(200).json({ message: 'Sell order cancelled.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.getDealNote = async (req, res) => {
+    const { transaction_id } = req.params;
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT investor_id, firstname, surname FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor = investorRows[0];
+
+        const [rows] = await db.query(
+            `SELECT t.*, c.company_name, c.ticker
+             FROM transactions t
+             JOIN companies c ON t.company_id = c.company_id
+             WHERE t.transaction_id = ? AND t.investor_id = ?`,
+            [transaction_id, investor.investor_id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Deal note not found.' });
+        }
+
+        const t = rows[0];
+        const grossValue = t.quantity * parseFloat(t.price);
+
+        res.status(200).json({
+            deal_note_number: t.deal_note_number,
+            investor_name: investor.firstname + ' ' + investor.surname,
+            type: t.type,
+            company_name: t.company_name,
+            ticker: t.ticker,
+            quantity: t.quantity,
+            price: t.price,
+            gross_value: grossValue.toFixed(2),
+            transaction_date: t.transaction_date,
+            settlement_date: t.settlement_date,
+            broker: 'Stockbrokers Malawi Limited'
+        });
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
