@@ -9,12 +9,18 @@ if (currentUser) {
     loadOrders();
 }
 
+let myTransactions = [];
+
 async function loadOrders() {
     const wrap = document.getElementById('ordersTableWrap');
 
     try {
-        const res = await fetch(API_BASE + '/orders/my-orders', {
-            method: 'GET',
+        const txRes = await fetch(API_BASE + '/orders/my-transactions', { headers: getAuthHeaders() });
+        if (txRes.ok) {
+            myTransactions = await txRes.json();
+        }
+
+              const res = await fetch(API_BASE + '/orders/my-orders', {
             headers: getAuthHeaders()
         });
 
@@ -59,13 +65,27 @@ function renderTable(orders) {
             '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
             '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
                    '<td><span class="status-pill status-' + o.status + '">' + o.status.charAt(0).toUpperCase() + o.status.slice(1) + '</span></td>' +
-            '<td>' + (o.status === 'pending' ? '<button class="btn btn-danger btn-sm" onclick="cancelOrder(' + o.id + ', \'' + o.type + '\')">Cancel</button>' : '') + '</td>' +
-            '</tr>';     
+            '<td>' +
+                (o.status === 'pending' ? '<button class="btn btn-danger btn-sm" onclick="cancelOrder(' + o.id + ', \'' + o.type + '\')">Cancel</button>' : '') +
+                (o.status === 'approved' ? findDealNoteLink(o) : '') +
+            '</td>' +
+            '</tr>';
     });
 
     html += '</tbody></table>';
     wrap.innerHTML = html;
 }
+function findDealNoteLink(order) {
+    const match = myTransactions.find(function (t) {
+        return t.type === order.type && t.company_name === order.company_name && t.quantity === order.quantity;
+    });
+
+    if (match) {
+        return '<a href="deal-note.html?transaction_id=' + match.transaction_id + '" class="btn btn-outline btn-sm">Deal Note</a>';
+    }
+    return '';
+}
+
 async function cancelOrder(id, type) {
     if (!confirm('Are you sure you want to cancel this order?')) return;
 

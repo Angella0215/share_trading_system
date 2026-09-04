@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Note - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div style="max-width:600px; margin:40px auto; padding:0 20px;">
+    <div class="card" id="dealNoteCard">
+      <div class="empty-state">Loading deal note...</div>
+    </div>
+
+       <div class="no-print" style="margin-top:20px; text-align:center;">
+      <button class="btn btn-outline" onclick="window.print()">Print</button>
+      <a href="orders.html" class="btn btn-outline">Back to Order History</a>
+    </div>
+
+    <style media="print">
+      .no-print { display: none !important; }
+    </style>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/session.js"></script>
+  <script src="../js/deal-note.js"></script>
+</body>
+</html>
