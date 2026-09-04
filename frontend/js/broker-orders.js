@@ -1,6 +1,5 @@
-// Broker Orders page: shows pending buy and sell orders as tables,
-// with an approve button for each. Also links to proof of payment
-// for buy orders, so the broker can verify funds were sent.
+// Broker Orders page: shows pending and first-approved buy/sell
+// orders, with dual approval (maker-checker) buttons for each.
 
 const currentUser = requireRole('broker');
 
@@ -17,6 +16,20 @@ function fileUrl(path) {
     return 'http://localhost:5000/uploads/' + filename;
 }
 
+function buildActionCell(item, idField, firstFn, finalFn) {
+    let actionCell = '';
+    if (item.status === 'pending') {
+        actionCell = '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>';
+    } else if (item.status === 'first_approved') {
+        if (item.first_approver_id == currentUser.user_id) {
+            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>';
+        } else {
+            actionCell = '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>';
+        }
+    }
+    return actionCell;
+}
+
 async function loadBuyOrders() {
     const wrap = document.getElementById('buyOrdersWrap');
 
@@ -30,10 +43,12 @@ async function loadBuyOrders() {
         }
 
         let html = '<table class="data-table"><thead><tr>' +
-            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Proof</th><th></th>' +
+            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Proof</th><th>Status</th><th></th>' +
             '</tr></thead><tbody>';
 
         orders.forEach(function (o) {
+            const actionCell = buildActionCell(o, 'order_id', 'firstApproveBuy', 'finalApproveBuy');
+
             html += '<tr>' +
                 '<td>' + o.firstname + ' ' + o.surname + '<br><span style="color:var(--slate); font-size:12px;">' + o.email + '</span></td>' +
                 '<td>' + o.company_name + ' <span class="mono">(' + o.ticker + ')</span></td>' +
@@ -41,7 +56,8 @@ async function loadBuyOrders() {
                 '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
                 '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
                 '<td>' + (fileUrl(o.proof_of_payment_path) ? '<a href="' + fileUrl(o.proof_of_payment_path) + '" target="_blank" class="btn btn-outline btn-sm">View</a>' : '-') + '</td>' +
-                '<td><button class="btn btn-success btn-sm" onclick="approveBuy(' + o.order_id + ')">Approve</button></td>' +
+                '<td><span class="status-pill status-' + o.status + '">' + o.status.replace('_', ' ') + '</span></td>' +
+                '<td>' + actionCell + '</td>' +
                 '</tr>';
         });
 
@@ -66,17 +82,20 @@ async function loadSellOrders() {
         }
 
         let html = '<table class="data-table"><thead><tr>' +
-            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Investor receives</th><th></th>' +
+            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Investor receives</th><th>Status</th><th></th>' +
             '</tr></thead><tbody>';
 
         orders.forEach(function (o) {
+            const actionCell = buildActionCell(o, 'sell_id', 'firstApproveSell', 'finalApproveSell');
+
             html += '<tr>' +
                 '<td>' + o.firstname + ' ' + o.surname + '<br><span style="color:var(--slate); font-size:12px;">' + o.email + '</span></td>' +
                 '<td>' + o.company_name + ' <span class="mono">(' + o.ticker + ')</span></td>' +
                 '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
                 '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
                 '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
-                '<td><button class="btn btn-success btn-sm" onclick="approveSell(' + o.sell_id + ')">Approve</button></td>' +
+                '<td><span class="status-pill status-' + o.status + '">' + o.status.replace('_', ' ') + '</span></td>' +
+                '<td>' + actionCell + '</td>' +
                 '</tr>';
         });
 
@@ -88,31 +107,26 @@ async function loadSellOrders() {
     }
 }
 
-async function approveBuy(orderId) {
-    const successAlert = document.getElementById('successAlert');
-    try {
-        const res = await fetch(API_BASE + '/orders/buy/' + orderId + '/approve', {
-            method: 'PUT',
-            headers: getAuthHeaders()
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            successAlert.textContent = data.message;
-            successAlert.classList.add('show');
-            loadBuyOrders();
-        } else {
-            alert(data.message || 'Approval failed.');
-        }
-    } catch (err) {
-        alert('Could not reach the server.');
-    }
+async function firstApproveBuy(orderId) {
+    await runApproval('/orders/buy/' + orderId + '/first-approve', loadBuyOrders);
 }
 
-async function approveSell(sellId) {
+async function finalApproveBuy(orderId) {
+    await runApproval('/orders/buy/' + orderId + '/final-approve', loadBuyOrders);
+}
+
+async function firstApproveSell(sellId) {
+    await runApproval('/orders/sell/' + sellId + '/first-approve', loadSellOrders);
+}
+
+async function finalApproveSell(sellId) {
+    await runApproval('/orders/sell/' + sellId + '/final-approve', loadSellOrders);
+}
+
+async function runApproval(endpoint, reloadFn) {
     const successAlert = document.getElementById('successAlert');
     try {
-        const res = await fetch(API_BASE + '/orders/sell/' + sellId + '/approve', {
+        const res = await fetch(API_BASE + endpoint, {
             method: 'PUT',
             headers: getAuthHeaders()
         });
@@ -121,7 +135,7 @@ async function approveSell(sellId) {
         if (res.ok) {
             successAlert.textContent = data.message;
             successAlert.classList.add('show');
-            loadSellOrders();
+            reloadFn();
         } else {
             alert(data.message || 'Approval failed.');
         }
