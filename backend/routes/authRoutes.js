@@ -8,5 +8,7 @@ router.post('/login', authController.login);
 router.get('/brokers', verifyToken, authController.getBrokers);
 router.get('/investors-list', verifyToken, authController.getInvestors);
 router.get('/users', verifyToken, requireRole('admin'), authController.getAllUsers);
+router.post('/request-password-reset', authController.requestPasswordReset);
+router.post('/confirm-password-reset', authController.confirmPasswordReset);
 
 module.exports = router;
