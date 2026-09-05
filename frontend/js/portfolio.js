@@ -76,3 +76,30 @@ function renderTable(portfolio) {
     html += '</tbody></table>';
     wrap.innerHTML = html;
 }
+
+async function downloadStatement(type) {
+    try {
+        const res = await fetch(API_BASE + '/statements/' + type, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (!res.ok) {
+            alert('Could not generate the statement.');
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = type + '-statement.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+        alert('Could not reach the server.');
+    }
+}

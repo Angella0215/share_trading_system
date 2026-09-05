@@ -45,9 +45,12 @@
           <p>All your buy and sell orders, most recent first.</p>
         </div>
       </div>
-
       <div class="card">
+        <div style="text-align:right; margin-bottom:16px;">
+          <button class="btn btn-outline btn-sm" onclick="downloadStatement('transactions')">Download Transaction Statement (PDF)</button>
+        </div>
         <div id="ordersTableWrap">
+     
           <div class="empty-state">Loading your orders...</div>
         </div>
       </div>
