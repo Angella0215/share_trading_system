@@ -45,10 +45,10 @@ async function loadOrders() {
 
 function renderTable(orders) {
     const wrap = document.getElementById('ordersTableWrap');
-    let html = '<table class="data-table"><thead><tr>' +
-        '<th>Date</th><th>Type</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Status</th><th></th>' +
-        '</tr></thead><tbody>';
    
+       let html = '<table class="data-table"><thead><tr>' +
+        '<th>Date</th><th>Type</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Status</th><th>Settlement</th><th></th>' +
+        '</tr></thead><tbody>';
 
     orders.forEach(function (o) {
         const date = new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -64,17 +64,25 @@ function renderTable(orders) {
             '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
             '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
             '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
-                   '<td><span class="status-pill status-' + o.status + '">' + o.status.charAt(0).toUpperCase() + o.status.slice(1) + '</span></td>' +
+              '<td>' + buildStatusPill(o.status) + '</td>' +
+            '<td>' + buildSettlementCell(o) + '</td>' +
             '<td>' +
                 (o.status === 'pending' ? '<button class="btn btn-danger btn-sm" onclick="cancelOrder(' + o.id + ', \'' + o.type + '\')">Cancel</button>' : '') +
                 (o.status === 'approved' ? findDealNoteLink(o) : '') +
             '</td>' +
             '</tr>';
+
     });
 
     html += '</tbody></table>';
     wrap.innerHTML = html;
 }
+function buildStatusPill(status) {
+    const displayStatus = status === 'first_approved' ? 'pending' : status;
+    const label = displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1);
+    return '<span class="status-pill status-' + displayStatus + '">' + label + '</span>';
+}
+
 function findDealNoteLink(order) {
     const match = myTransactions.find(function (t) {
         return t.type === order.type && t.company_name === order.company_name && t.quantity === order.quantity;
@@ -109,4 +117,21 @@ async function cancelOrder(id, type) {
     } catch (err) {
         alert('Could not reach the server.');
     }
+}
+
+function buildSettlementCell(order) {
+    if (order.status !== 'approved') {
+        return '<span style="color:var(--slate); font-size:12.5px;">-</span>';
+    }
+
+    const match = myTransactions.find(function (t) {
+        return t.type === order.type && t.company_name === order.company_name && t.quantity === order.quantity;
+    });
+
+    if (match && match.settlement_date) {
+        const date = new Date(match.settlement_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        return '<span class="mono" style="font-size:12.5px;">' + date + '</span>';
+    }
+
+    return '<span style="color:var(--slate); font-size:12.5px;">Pending</span>';
 }
