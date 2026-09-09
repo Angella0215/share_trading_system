@@ -10,5 +10,6 @@ router.get('/investors-list', verifyToken, authController.getInvestors);
 router.get('/users', verifyToken, requireRole('admin'), authController.getAllUsers);
 router.post('/request-password-reset', authController.requestPasswordReset);
 router.post('/confirm-password-reset', authController.confirmPasswordReset);
+router.post('/google-login', authController.googleLogin);
 
 module.exports = router;

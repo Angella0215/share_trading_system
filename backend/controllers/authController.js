@@ -3,6 +3,8 @@ const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const transporter = require('../config/mailer');
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.register = async (req, res) => {
     const { fullname, email, phone, password, role } = req.body;
@@ -188,5 +190,63 @@ exports.confirmPasswordReset = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+exports.googleLogin = async (req, res) => {
+    const { credential } = req.body;
+
+    if (!credential) {
+        return res.status(400).json({ message: 'No Google credential provided.' });
+    }
+
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+        const email = payload.email;
+        const fullname = payload.name;
+
+        let [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        let user;
+
+        if (users.length === 0) {
+            // New Google user - create an investor account automatically.
+            // A random password is set since they'll only ever log in via Google.
+            const randomPassword = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            const [result] = await db.query(
+                'INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)',
+                [fullname, email, hashedPassword, 'investor']
+            );
+
+            user = { user_id: result.insertId, fullname, email, role: 'investor', status: 'pending' };
+        } else {
+            user = users[0];
+        }
+
+        const token = jwt.sign(
+            { user_id: user.user_id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        res.status(200).json({
+            message: 'Login successful.',
+            token,
+            user: {
+                user_id: user.user_id,
+                fullname: user.fullname,
+                email: user.email,
+                role: user.role,
+                status: user.status
+            }
+        });
+
+    } catch (error) {
+        res.status(401).json({ message: 'Google sign-in failed: ' + error.message });
     }
 };

@@ -110,3 +110,34 @@ if (loginForm) {
         }
     });
 }
+
+async function handleGoogleLogin(response) {
+    try {
+        const res = await fetch(API_BASE + '/google-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message || 'Google sign-in failed.');
+            return;
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        if (data.user.role === 'investor') {
+            window.location.href = 'investor/dashboard.html';
+        } else if (data.user.role === 'broker') {
+            window.location.href = 'broker/dashboard.html';
+        } else if (data.user.role === 'admin') {
+            window.location.href = 'admin/dashboard.html';
+        }
+
+    } catch (err) {
+        alert('Could not reach the server. Make sure the backend is running.');
+    }
+}
