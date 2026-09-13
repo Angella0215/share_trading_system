@@ -85,7 +85,7 @@ function buildStatusPill(status) {
 
 function findDealNoteLink(order) {
     const match = myTransactions.find(function (t) {
-        return t.type === order.type && t.company_name === order.company_name && t.quantity === order.quantity;
+        return order.type === 'buy' ? t.buy_order_id === order.id : t.sell_order_id === order.id;
     });
 
     if (match) {
@@ -125,7 +125,7 @@ function buildSettlementCell(order) {
     }
 
     const match = myTransactions.find(function (t) {
-        return t.type === order.type && t.company_name === order.company_name && t.quantity === order.quantity;
+        return order.type === 'buy' ? t.buy_order_id === order.id : t.sell_order_id === order.id;
     });
 
     if (match && match.settlement_date) {
