@@ -174,12 +174,11 @@ exports.finalApproveBuyOrder = async (req, res) => {
         const dealNoteNumber = generateDealNoteNumber();
 
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
+            'INSERT INTO transactions (investor_id, company_id, buy_order_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, order.order_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
         res.status(200).json({ message: 'Buy order fully approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
-
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
@@ -321,8 +320,8 @@ exports.finalApproveSellOrder = async (req, res) => {
         const dealNoteNumber = generateDealNoteNumber();
 
         await db.query(
-            'INSERT INTO transactions (investor_id, company_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
+            'INSERT INTO transactions (investor_id, company_id, sell_order_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [order.investor_id, order.company_id, order.sell_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
         res.status(200).json({ message: 'Sell order fully approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
@@ -422,14 +421,13 @@ exports.getMyTransactions = async (req, res) => {
         const investor_id = investorRows[0].investor_id;
 
         const [rows] = await db.query(
-            `SELECT t.transaction_id, t.type, t.quantity, t.price, t.transaction_date, t.settlement_date, c.company_name, c.ticker
+            `SELECT t.transaction_id, t.type, t.buy_order_id, t.sell_order_id, t.quantity, t.price, t.transaction_date, t.settlement_date, c.company_name, c.ticker
              FROM transactions t
              JOIN companies c ON t.company_id = c.company_id
              WHERE t.investor_id = ?
              ORDER BY t.transaction_date DESC`,
             [investor_id]
         );
-
         res.status(200).json(rows);
 
     } catch (error) {
