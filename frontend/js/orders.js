@@ -10,6 +10,9 @@ if (currentUser) {
 }
 
 let myTransactions = [];
+let allOrderItems = [];
+let currentOrderPage = 1;
+const orderPageSize = 10;
 
 async function loadOrders() {
     const wrap = document.getElementById('ordersTableWrap');
@@ -41,11 +44,19 @@ async function loadOrders() {
         wrap.innerHTML = '<div class="empty-state">Could not load your orders. Make sure the backend is running.</div>';
     }
 }
-
 function renderTable(orders) {
+    allOrderItems = orders;
+    renderOrderPage();
+}
+
+function renderOrderPage() {
     const wrap = document.getElementById('ordersTableWrap');
-   
-       let html = '<table class="data-table"><thead><tr>' +
+    const totalPages = Math.ceil(allOrderItems.length / orderPageSize);
+    const start = (currentOrderPage - 1) * orderPageSize;
+    const orders = allOrderItems.slice(start, start + orderPageSize);
+
+    let html = '<table class="data-table"><thead><tr>' +
+
         '<th>Date</th><th>Type</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Status</th><th>Settlement</th><th></th>' +
         '</tr></thead><tbody>';
 
@@ -70,12 +81,27 @@ function renderTable(orders) {
                 (o.status === 'approved' ? findDealNoteLink(o) : '') +
             '</td>' +
             '</tr>';
-
     });
 
     html += '</tbody></table>';
+
+    if (totalPages > 1) {
+        html += '<div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:16px;">' +
+            '<button class="btn btn-outline btn-sm" onclick="changeOrderPage(-1)" ' + (currentOrderPage === 1 ? 'disabled' : '') + '>Previous</button>' +
+            '<span style="font-size:13.5px; color:var(--slate);">Page ' + currentOrderPage + ' of ' + totalPages + '</span>' +
+            '<button class="btn btn-outline btn-sm" onclick="changeOrderPage(1)" ' + (currentOrderPage === totalPages ? 'disabled' : '') + '>Next</button>' +
+            '</div>';
+    }
+
     wrap.innerHTML = html;
 }
+
+function changeOrderPage(direction) {
+    const totalPages = Math.ceil(allOrderItems.length / orderPageSize);
+    currentOrderPage = Math.max(1, Math.min(totalPages, currentOrderPage + direction));
+    renderOrderPage();
+}
+
 function buildStatusPill(status) {
     const displayStatus = status === 'first_approved' ? 'pending' : status;
     const label = displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1);
