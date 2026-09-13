@@ -13,8 +13,9 @@ if (currentUser) {
 }
 
 async function init() {
-    try {
-        const meRes = await fetch(API_BASE + '/investors/me', { headers: getAuthHeaders() });
+       try {
+        const meRes = await authFetch(API_BASE + '/investors/me', {});
+        if (!meRes) return;
         const meData = await meRes.json();
 
         if (!meRes.ok) {
@@ -156,10 +157,9 @@ sellForm.addEventListener('submit', async function (e) {
     btn.disabled = true;
     btn.textContent = 'Submitting...';
 
-    try {
-        const res = await fetch(API_BASE + '/orders/sell', {
+       try {
+        const res = await authFetch(API_BASE + '/orders/sell', {
             method: 'POST',
-            headers: getAuthHeaders(),
             body: JSON.stringify({
                 investor_id: investorId,
                 company_id: parseInt(companyId),
@@ -167,7 +167,9 @@ sellForm.addEventListener('submit', async function (e) {
             })
         });
 
-        const data = await res.json();
+        if (!res) return;
+
+        const data = await res.json();      
 
         if (!res.ok) {
             errorAlert.textContent = data.message || 'Order failed. Please try again.';

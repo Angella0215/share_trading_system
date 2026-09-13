@@ -13,11 +13,8 @@ async function loadCompanies() {
     const wrap = document.getElementById('companiesTableWrap');
 
     try {
-        const res = await fetch(API_BASE + '/companies', {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
-
+        const res = await authFetch(API_BASE + '/companies', { method: 'GET' });
+        if (!res) return;
         const companies = await res.json();
 
         if (!res.ok || companies.length === 0) {
@@ -30,9 +27,8 @@ async function loadCompanies() {
         const withChange = await Promise.all(companies.map(async function (c) {
             let change = null;
             try {
-                const histRes = await fetch(API_BASE + '/companies/' + c.company_id + '/history', {
-                    headers: getAuthHeaders()
-                });
+                const histRes = await authFetch(API_BASE + '/companies/' + c.company_id + '/history', {});
+                if (!histRes) return { company: c, change: null };
                 const history = await histRes.json();
                 if (history.length >= 2) {
                     const latest = parseFloat(history[history.length - 1].price);

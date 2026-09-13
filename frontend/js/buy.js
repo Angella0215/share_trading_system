@@ -15,7 +15,8 @@ if (currentUser) {
 async function init() {
     // Confirm the investor has a verified account before letting them trade.
     try {
-        const meRes = await fetch(API_BASE + '/investors/me', { headers: getAuthHeaders() });
+ const meRes = await authFetch(API_BASE + '/investors/me', {});
+        if (!meRes) return;
         const meData = await meRes.json();
 
         if (!meRes.ok) {
@@ -47,9 +48,9 @@ function showBlocked(message) {
 
 async function loadCompanies() {
     try {
-        const res = await fetch(API_BASE + '/companies', { headers: getAuthHeaders() });
+        const res = await authFetch(API_BASE + '/companies', {});
+        if (!res) return;
         companiesData = await res.json();
-
         const select = document.getElementById('company_id');
         companiesData.forEach(function (c) {
             const opt = document.createElement('option');
