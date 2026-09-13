@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard - Stockbrokers Malawi Limited</title>
+<title>Orders - Stockbrokers Malawi Limited</title>
 <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -16,10 +16,10 @@
       </div>
 
       <nav class="sidebar-nav">
-        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="dashboard.html">Dashboard</a>
         <a href="users.html">Users</a>
         <a href="companies.html">Companies</a>
-        <a href="orders.html">Orders</a>
+        <a href="orders.html" class="active">Orders</a>
       </nav>
 
       <div class="sidebar-footer">
@@ -37,31 +37,24 @@
     <main class="main-content">
       <div class="page-header">
         <div>
-          <h1>Admin Dashboard</h1>
-          <p>System overview.</p>
+          <h1>Pending Orders</h1>
+          <p>Review and approve buy and sell orders placed by investors.</p>
         </div>
       </div>
 
-      <div class="stat-cards">
-        <div class="stat-card">
-          <div class="label">Total users</div>
-          <div class="value" id="statTotalUsers">-</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Total investors</div>
-          <div class="value" id="statInvestors">-</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Listed companies</div>
-          <div class="value" id="statCompanies">-</div>
+      <div class="alert alert-success" id="successAlert"></div>
+
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><div class="card-title">Buy orders</div></div>
+        <div id="buyOrdersWrap">
+          <div class="empty-state">Loading buy orders...</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-header"><div class="card-title">Quick links</div></div>
-        <div style="display:flex; gap:16px; flex-wrap:wrap;">
-          <a href="users.html" class="btn btn-primary">Manage users</a>
-          <a href="companies.html" class="btn btn-outline">Manage companies & prices</a>
+        <div class="card-header"><div class="card-title">Sell orders</div></div>
+        <div id="sellOrdersWrap">
+          <div class="empty-state">Loading sell orders...</div>
         </div>
       </div>
     </main>
@@ -69,6 +62,6 @@
 
   <script src="../js/config.js"></script>
   <script src="../js/session.js"></script>
-  <script src="../js/admin-dashboard.js"></script>
+  <script src="../js/admin-orders.js"></script>
 </body>
 </html>
