@@ -13,11 +13,8 @@ async function loadPortfolio() {
     const wrap = document.getElementById('portfolioTableWrap');
 
     try {
-        const res = await fetch(API_BASE + '/investors/me', {
-            method: 'GET',
-            headers: getAuthHeaders()
-        });
-
+        const res = await authFetch(API_BASE + '/investors/me', { method: 'GET' });
+        if (!res) return;
         const data = await res.json();
 
         if (!res.ok) {

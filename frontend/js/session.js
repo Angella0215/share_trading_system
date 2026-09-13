@@ -39,3 +39,22 @@ function getAuthHeaders() {
         'Authorization': 'Bearer ' + token
     };
 }
+
+// Wraps fetch for authenticated requests. If the token is invalid or
+// expired, automatically logs the user out and sends them back to
+// login with a clear message, instead of leaving them on a broken page.
+async function authFetch(url, options = {}) {
+    options.headers = Object.assign({}, getAuthHeaders(), options.headers || {});
+
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.setItem('sessionExpiredMessage', 'Your session has expired. Please log in again.');
+        window.location.href = getLoginPath();
+        return null;
+    }
+
+    return res;
+}

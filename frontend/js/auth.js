@@ -1,4 +1,13 @@
 const loginForm = document.getElementById('loginForm');
+const sessionExpiredMessage = localStorage.getItem('sessionExpiredMessage');
+if (sessionExpiredMessage) {
+    const errorAlert = document.getElementById('errorAlert');
+    if (errorAlert) {
+        errorAlert.textContent = sessionExpiredMessage;
+        errorAlert.classList.add('show');
+    }
+    localStorage.removeItem('sessionExpiredMessage');
+}
 
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {

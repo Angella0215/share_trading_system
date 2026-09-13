@@ -15,14 +15,13 @@ async function loadOrders() {
     const wrap = document.getElementById('ordersTableWrap');
 
     try {
-        const txRes = await fetch(API_BASE + '/orders/my-transactions', { headers: getAuthHeaders() });
-        if (txRes.ok) {
+             const txRes = await authFetch(API_BASE + '/orders/my-transactions', {});
+        if (txRes && txRes.ok) {
             myTransactions = await txRes.json();
         }
 
-              const res = await fetch(API_BASE + '/orders/my-orders', {
-            headers: getAuthHeaders()
-        });
+        const res = await authFetch(API_BASE + '/orders/my-orders', {});
+        if (!res) return;  
 
         const orders = await res.json();
 
@@ -100,10 +99,8 @@ async function cancelOrder(id, type) {
     const endpoint = type === 'buy' ? '/orders/buy/' + id + '/cancel' : '/orders/sell/' + id + '/cancel';
 
     try {
-        const res = await fetch(API_BASE + endpoint, {
-            method: 'PUT',
-            headers: getAuthHeaders()
-        });
+                const res = await authFetch(API_BASE + endpoint, { method: 'PUT' });
+        if (!res) return;
 
         const data = await res.json();
 
