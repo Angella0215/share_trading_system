@@ -58,3 +58,32 @@ async function authFetch(url, options = {}) {
 
     return res;
 }
+// Shows a floating notification in the top-right corner that
+// automatically fades away after a few seconds. Use for quick
+// confirmations on pages with multiple actions (like approvals),
+// where an inline banner is easy to miss.
+function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    // Trigger the fade-in on the next frame so the CSS transition runs.
+    requestAnimationFrame(function () {
+        toast.classList.add('show');
+    });
+
+    setTimeout(function () {
+        toast.classList.remove('show');
+        setTimeout(function () {
+            toast.remove();
+        }, 300);
+    }, 6000);
+}

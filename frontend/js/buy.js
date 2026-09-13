@@ -178,14 +178,13 @@ buyForm.addEventListener('submit', async function (e) {
             btn.textContent = 'Submit buy order';
             return;
         }
-
         successAlert.textContent = 'Buy order submitted! ' + data.quantity + ' shares, total MWK ' + data.total_amount + '. Awaiting broker approval.';
         successAlert.classList.add('show');
+        showToast('Buy order submitted successfully!', 'success');
         buyForm.reset();
         updateSummary();
         btn.disabled = false;
         btn.textContent = 'Submit buy order';
-
     } catch (err) {
         errorAlert.textContent = 'Could not reach the server. Make sure the backend is running.';
         errorAlert.classList.add('show');

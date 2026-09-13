@@ -178,9 +178,9 @@ sellForm.addEventListener('submit', async function (e) {
             btn.textContent = 'Submit sell order';
             return;
         }
-
         successAlert.textContent = 'Sell order submitted! ' + data.quantity + ' shares, you will receive MWK ' + data.you_will_receive + '. Awaiting broker approval.';
         successAlert.classList.add('show');
+        showToast('Sell order submitted successfully!', 'success');
         sellForm.reset();
         document.getElementById('orderSummary').innerHTML = '<div class="empty-state">Select a company and enter a quantity to see the breakdown.</div>';
         btn.disabled = false;

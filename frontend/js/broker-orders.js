@@ -124,7 +124,6 @@ async function finalApproveSell(sellId) {
 }
 
 async function runApproval(endpoint, reloadFn) {
-    const successAlert = document.getElementById('successAlert');
     try {
         const res = await fetch(API_BASE + endpoint, {
             method: 'PUT',
@@ -133,13 +132,12 @@ async function runApproval(endpoint, reloadFn) {
         const data = await res.json();
 
         if (res.ok) {
-            successAlert.textContent = data.message;
-            successAlert.classList.add('show');
+            showToast(data.message, 'success');
             reloadFn();
         } else {
-            alert(data.message || 'Approval failed.');
+            showToast(data.message || 'Approval failed.', 'error');
         }
     } catch (err) {
-        alert('Could not reach the server.');
+        showToast('Could not reach the server.', 'error');
     }
 }
