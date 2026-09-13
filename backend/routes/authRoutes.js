@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { verifyToken, requireRole } = require('../middleware/authMiddleware');
+const loginLimiter = require('../middleware/rateLimiter');
 
 router.post('/register', authController.register);
-router.post('/login', authController.login);
+router.post('/login', loginLimiter, authController.login);
 router.get('/brokers', verifyToken, authController.getBrokers);
 router.get('/investors-list', verifyToken, authController.getInvestors);
 router.get('/users', verifyToken, requireRole('admin'), authController.getAllUsers);
