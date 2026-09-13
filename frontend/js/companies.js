@@ -8,6 +8,9 @@ if (currentUser) {
     document.getElementById('userAvatar').textContent = currentUser.fullname.charAt(0).toUpperCase();
     loadCompanies();
 }
+let allCompanyItems = [];
+let currentPage = 1;
+const pageSize = 10;
 
 async function loadCompanies() {
     const wrap = document.getElementById('companiesTableWrap');
@@ -47,9 +50,16 @@ async function loadCompanies() {
         wrap.innerHTML = '<div class="empty-state">Could not load companies. Make sure the backend is running.</div>';
     }
 }
-
 function renderTable(items) {
+    allCompanyItems = items;
+    renderPage();
+}
+
+function renderPage() {
     const wrap = document.getElementById('companiesTableWrap');
+    const totalPages = Math.ceil(allCompanyItems.length / pageSize);
+    const start = (currentPage - 1) * pageSize;
+    const items = allCompanyItems.slice(start, start + pageSize);
 
     let html = '<table class="data-table"><thead><tr>' +
         '<th>Company</th><th>Ticker</th><th>Sector</th><th>Price (MWK)</th><th>Change</th><th></th>' +
@@ -82,5 +92,20 @@ function renderTable(items) {
     });
 
     html += '</tbody></table>';
+
+    if (totalPages > 1) {
+        html += '<div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:16px;">' +
+            '<button class="btn btn-outline btn-sm" onclick="changePage(-1)" ' + (currentPage === 1 ? 'disabled' : '') + '>Previous</button>' +
+            '<span style="font-size:13.5px; color:var(--slate);">Page ' + currentPage + ' of ' + totalPages + '</span>' +
+            '<button class="btn btn-outline btn-sm" onclick="changePage(1)" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next</button>' +
+            '</div>';
+    }
+
     wrap.innerHTML = html;
+}
+
+function changePage(direction) {
+    const totalPages = Math.ceil(allCompanyItems.length / pageSize);
+    currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
+    renderPage();
 }
