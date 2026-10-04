@@ -3,14 +3,16 @@ const db = require('../config/db');
 exports.getAllCompanies = async (req, res) => {
     try {
         const [rows] = await db.query(
-            'SELECT company_id, company_name, ticker, sector, current_price, market_cap FROM companies ORDER BY company_name'
+            `SELECT c.company_id, c.company_name, c.ticker, c.sector, c.current_price, c.market_cap,
+                    (SELECT MAX(sp.date_recorded) FROM share_prices sp WHERE sp.company_id = c.company_id) AS last_updated
+             FROM companies c
+             ORDER BY c.company_name`
         );
         res.status(200).json(rows);
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
 exports.getPriceHistory = async (req, res) => {
     const { company_id } = req.params;
     try {
