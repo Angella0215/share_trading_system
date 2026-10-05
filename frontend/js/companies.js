@@ -61,8 +61,8 @@ function renderPage() {
     const start = (currentPage - 1) * pageSize;
     const items = allCompanyItems.slice(start, start + pageSize);
 
-    let html = '<table class="data-table"><thead><tr>' +
-        '<th>Company</th><th>Ticker</th><th>Sector</th><th>Price (MWK)</th><th>Change</th><th></th>' +
+     let html = '<table class="data-table"><thead><tr>' +
+        '<th>Company</th><th>Ticker</th><th>Sector</th><th>Price (MWK)</th><th>Change</th><th>Last Updated</th><th></th>' +
         '</tr></thead><tbody>';
 
     items.forEach(function (item) {
@@ -87,6 +87,7 @@ function renderPage() {
             '<td>' + (c.sector || '-') + '</td>' +
             '<td class="mono">' + price + '</td>' +
             '<td class="mono">' + changeHtml + '</td>' +
+            '<td style="font-size:12px; color:var(--slate);">' + formatLastUpdated(c.last_updated) + '</td>' +
             '<td><a href="buy.html?company=' + c.company_id + '" class="btn btn-primary btn-sm">Buy</a></td>' +
             '</tr>';
     });
@@ -108,4 +109,11 @@ function changePage(direction) {
     const totalPages = Math.ceil(allCompanyItems.length / pageSize);
     currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
     renderPage();
+}
+
+function formatLastUpdated(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+        ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
