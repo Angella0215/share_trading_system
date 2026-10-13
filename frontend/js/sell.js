@@ -178,7 +178,7 @@ sellForm.addEventListener('submit', async function (e) {
             btn.textContent = 'Submit sell order';
             return;
         }
-        successAlert.textContent = 'Sell order submitted! ' + data.quantity + ' shares, you will receive MWK ' + data.you_will_receive + '. Awaiting broker approval.';
+        successAlert.textContent = 'Sell order submitted! ' + data.quantity + ' shares, you will receive MWK ' + data.you_will_receive + '. Awaiting broker approval. Your Sale Note will be available in Order History once the sale is approved.';
         successAlert.classList.add('show');
         showToast('Sell order submitted successfully!', 'success');
         sellForm.reset();
@@ -193,3 +193,4 @@ sellForm.addEventListener('submit', async function (e) {
         btn.textContent = 'Submit sell order';
     }
 });
+

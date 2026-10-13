@@ -62,10 +62,12 @@ exports.getShareholdingStatement = async (req, res) => {
                 y += 20;
             });
 
-            doc.moveDown(2);
+            doc.x = 50;
+            doc.y = y + 20;
             doc.font('Helvetica-Bold').text('Total portfolio value: MWK ' + totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         }
 
+        doc.x = 50;
         doc.moveDown(2);
         doc.fontSize(8).font('Helvetica').text('This statement is generated electronically and reflects holdings as at the date shown above.', { align: 'center' });
 
@@ -127,6 +129,104 @@ exports.getTransactionStatement = async (req, res) => {
 
         doc.moveDown(2);
         doc.fontSize(8).text('This statement is generated electronically and lists all recorded transactions for this account.', { align: 'center' });
+
+        doc.end();
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.getSaleNote = async (req, res) => {
+    const { sell_id } = req.params;
+    const user_id = req.user.user_id;
+
+    try {
+        const [investorRows] = await db.query('SELECT * FROM investors WHERE user_id = ?', [user_id]);
+        if (investorRows.length === 0) {
+            return res.status(404).json({ message: 'No account application found.' });
+        }
+        const investor = investorRows[0];
+
+        const [orderRows] = await db.query(
+            `SELECT so.*, c.company_name, c.ticker,
+                    t.deal_note_number, t.transaction_date, t.settlement_date
+             FROM sell_orders so
+             JOIN companies c ON so.company_id = c.company_id
+             LEFT JOIN transactions t ON t.sell_order_id = so.sell_id
+             WHERE so.sell_id = ? AND so.investor_id = ?`,
+            [sell_id, investor.investor_id]
+        );
+
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Sell order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.status !== 'approved') {
+            return res.status(400).json({ message: 'A sale note is only issued once your sell order has been approved.' });
+        }
+
+        const fmtDate = function (d) {
+            return d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Not recorded';
+        };
+        const money = function (n) {
+            return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const doc = new PDFDocument({ margin: 50 });
+        const W = 495;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=sale-note-' + sell_id + '.pdf');
+        doc.pipe(res);
+
+        doc.fontSize(18).text('Stockbrokers Malawi Limited', 50, 50, { align: 'center', width: W });
+        doc.fontSize(12).text('Sale Note', 50, doc.y, { align: 'center', width: W });
+        doc.fontSize(9).fillColor('gray').text('A subsidiary of National Bank of Malawi', 50, doc.y + 4, { align: 'center', width: W });
+        doc.fillColor('black');
+
+        doc.fontSize(10);
+        doc.text('Sale Note No: SN-' + String(order.sell_id).padStart(6, '0'), 50, doc.y + 24, { width: W });
+        doc.text('Deal Note No: ' + (order.deal_note_number || 'Not recorded'), 50, doc.y, { width: W });
+        doc.text('Trade date: ' + fmtDate(order.transaction_date), 50, doc.y, { width: W });
+        doc.text('Settlement date (T+3): ' + fmtDate(order.settlement_date), 50, doc.y, { width: W });
+        doc.text('Client: ' + investor.firstname + ' ' + investor.surname, 50, doc.y, { width: W });
+        doc.text('National ID: ' + investor.national_id_number, 50, doc.y, { width: W });
+
+        doc.font('Helvetica-Bold').text('Sale Confirmation', 50, doc.y + 16, { width: W });
+        doc.font('Helvetica').text('Stockbrokers Malawi Limited confirms that, acting on the client\'s instruction, the following securities have been sold on the client\'s behalf on the Malawi Stock Exchange:', 50, doc.y + 4, { width: W });
+
+        const shareValue = order.quantity * parseFloat(order.price);
+        const tableTop = doc.y + 16;
+        doc.font('Helvetica-Bold');
+        doc.text('Company', 50, tableTop, { width: 150 });
+        doc.text('Ticker', 220, tableTop, { width: 80 });
+        doc.text('Quantity', 320, tableTop, { width: 80 });
+        doc.text('Price (MWK)', 420, tableTop, { width: 125 });
+        doc.font('Helvetica');
+        const rowY = tableTop + 20;
+        doc.text(order.company_name, 50, rowY, { width: 150 });
+        doc.text(order.ticker, 220, rowY, { width: 80 });
+        doc.text(order.quantity.toLocaleString(), 320, rowY, { width: 80 });
+        doc.text(parseFloat(order.price).toFixed(2), 420, rowY, { width: 125 });
+
+        doc.font('Helvetica-Bold').text('Proceeds of Sale', 50, rowY + 40, { width: W });
+        doc.font('Helvetica');
+        doc.text('Gross share value: MWK ' + money(shareValue), 50, doc.y + 4, { width: W });
+        doc.text('Less commission: MWK ' + money(order.commission), 50, doc.y, { width: W });
+        doc.text('Less VAT (17.5%): MWK ' + money(order.vat), 50, doc.y, { width: W });
+        doc.text('Less flat charge: MWK 50.00', 50, doc.y, { width: W });
+        doc.font('Helvetica-Bold').text('Net proceeds payable to client: MWK ' + money(order.total_amount), 50, doc.y, { width: W });
+
+        doc.fontSize(11).text('Terms and Conditions', 50, doc.y + 24, { align: 'center', width: W });
+        doc.font('Helvetica').fontSize(9);
+        doc.text('1. This sale was executed following approval by two authorized SML staff members (maker-checker control).', 50, doc.y + 8, { align: 'center', width: W });
+        doc.text('2. Settlement of this sale is on a T+3 basis, being the 3rd working day from the trade date.', 50, doc.y + 2, { align: 'center', width: W });
+        doc.text('3. Payment of net proceeds is usually made by cheque, issued on the settlement date.', 50, doc.y + 2, { align: 'center', width: W });
+        doc.text('4. Commission is charged at 2% on proceeds up to K50,000, 1.5% on the portion above K50,000 up to K100,000, and 1% on the portion above K100,000.', 50, doc.y + 2, { align: 'center', width: W });
+        doc.text('5. A basic charge of K50.00 and Value Added Tax at the rate ruling at the time of the transaction apply to every transaction.', 50, doc.y + 2, { align: 'center', width: W });
 
         doc.end();
 

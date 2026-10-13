@@ -78,7 +78,8 @@ function renderOrderPage() {
             '<td>' + buildSettlementCell(o) + '</td>' +
             '<td>' +
                 (o.status === 'pending' ? '<button class="btn btn-danger btn-sm" onclick="cancelOrder(' + o.id + ', \'' + o.type + '\')">Cancel</button>' : '') +
-                (o.status === 'approved' ? findDealNoteLink(o) : '') +
+                 (o.status === 'approved' ? findDealNoteLink(o) : '') +
+                (o.type === 'sell' && o.status === 'approved' ? ' <button class="btn btn-outline btn-sm" onclick="downloadSaleNote(' + o.id + ')">Sale Note</button>' : '') +
             '</td>' +
             '</tr>';
     });
@@ -183,5 +184,30 @@ async function downloadStatement(type) {
 
     } catch (err) {
         alert('Could not reach the server.');
+    }
+}
+
+async function downloadSaleNote(sellId) {
+    try {
+        const res = await authFetch(API_BASE + '/statements/sale-note/' + sellId, { method: 'GET' });
+        if (!res) return;
+
+        if (!res.ok) {
+            const data = await res.json();
+            showToast(data.message || 'Could not generate the sale note.', 'error');
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sale-note-' + sellId + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        showToast('Could not reach the server.', 'error');
     }
 }
