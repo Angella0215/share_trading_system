@@ -43,7 +43,7 @@ async function loadBuyOrders() {
         }
 
         let html = '<table class="data-table"><thead><tr>' +
-            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Total</th><th>Proof</th><th>Status</th><th></th>' +
+            '<th>Investor</th><th>Company</th><th>Amount deposited</th><th>Proof</th><th>Status</th><th></th>' +
             '</tr></thead><tbody>';
 
         orders.forEach(function (o) {
@@ -52,9 +52,7 @@ async function loadBuyOrders() {
             html += '<tr>' +
                 '<td>' + o.firstname + ' ' + o.surname + '<br><span style="color:var(--slate); font-size:12px;">' + o.email + '</span></td>' +
                 '<td>' + o.company_name + ' <span class="mono">(' + o.ticker + ')</span></td>' +
-                '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
-                '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
-                '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                  '<td class="mono">MWK ' + parseFloat(o.amount_deposited).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
                 '<td>' + (fileUrl(o.proof_of_payment_path) ? '<a href="' + fileUrl(o.proof_of_payment_path) + '" target="_blank" class="btn btn-outline btn-sm">View</a>' : '-') + '</td>' +
                 '<td><span class="status-pill status-' + o.status + '">' + o.status.replace('_', ' ') + '</span></td>' +
                 '<td>' + actionCell + '</td>' +
@@ -82,8 +80,8 @@ async function loadSellOrders() {
         }
 
         let html = '<table class="data-table"><thead><tr>' +
-            '<th>Investor</th><th>Company</th><th>Quantity</th><th>Price</th><th>Investor receives</th><th>Status</th><th></th>' +
-            '</tr></thead><tbody>';
+                        '<th>Investor</th><th>Company</th><th>Quantity</th><th>Pricing</th><th>Status</th><th></th>' +
+           '</tr></thead><tbody>';
 
         orders.forEach(function (o) {
             const actionCell = buildActionCell(o, 'sell_id', 'firstApproveSell', 'finalApproveSell');
@@ -92,8 +90,7 @@ async function loadSellOrders() {
                 '<td>' + o.firstname + ' ' + o.surname + '<br><span style="color:var(--slate); font-size:12px;">' + o.email + '</span></td>' +
                 '<td>' + o.company_name + ' <span class="mono">(' + o.ticker + ')</span></td>' +
                 '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
-                '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
-                '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                '<td style="color:var(--slate); font-size:12.5px;">Set at final approval</td>' +
                 '<td><span class="status-pill status-' + o.status + '">' + o.status.replace('_', ' ') + '</span></td>' +
                 '<td>' + actionCell + '</td>' +
                 '</tr>';

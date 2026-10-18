@@ -98,34 +98,20 @@ function updateSummary() {
     const quantity = parseInt(document.getElementById('quantity').value);
     const summaryEl = document.getElementById('orderSummary');
 
-    if (!companyId || !quantity || quantity <= 0) {
-        summaryEl.innerHTML = '<div class="empty-state">Select a company and enter a quantity to see the breakdown.</div>';
-        return;
-    }
-
     const holding = portfolioData.find(function (p) { return p.company_id == companyId; });
-    if (!holding) return;
-
-    if (quantity > holding.shares_owned) {
+    if (holding && quantity > holding.shares_owned) {
         summaryEl.innerHTML = '<div class="empty-state" style="color:var(--red);">You only own ' + holding.shares_owned + ' shares. Reduce the quantity.</div>';
         return;
     }
 
-    const price = parseFloat(holding.current_price);
-    const shareValue = quantity * price;
-    const commission = calculateCommission(shareValue);
-    const vat = commission * 0.175;
-    const flatCharge = 50;
-    const youReceive = shareValue - commission - vat - flatCharge;
-
     summaryEl.innerHTML =
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Shares to sell</span><span class="mono">' + quantity.toLocaleString() + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Price per share</span><span class="mono">MWK ' + price.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Share value</span><span class="mono">MWK ' + shareValue.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Commission</span><span class="mono">-MWK ' + commission.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">VAT (17.5%)</span><span class="mono">-MWK ' + vat.toFixed(2) + '</span></div>' +
-                '<div style="display:flex; justify-content:space-between; margin-bottom:16px;"><span style="color:var(--slate); font-size:13.5px;">Flat charge</span><span class="mono">-MWK 50.00</span></div>' +
-        '<div style="display:flex; justify-content:space-between; padding-top:16px; border-top:1px solid var(--border);"><strong>You receive</strong><strong class="mono" style="color:var(--green);">MWK ' + youReceive.toFixed(2) + '</strong></div>';
+        '<ol style="padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.8;">' +
+        '<li>Choose the company and how many shares you want to sell, then submit your order.</li>' +
+        '<li>Our staff verify your order and your holding.</li>' +
+        '<li>When your order receives final approval, the share price on that day is used to work out the value of your sale.</li>' +
+        '<li>Commission, VAT and the K50 flat charge are deducted, and the net proceeds are shown in Order History.</li>' +
+        '<li>Once approved, your Sale Note is available in Order History.</li>' +
+        '</ol>';
 }
 
 document.getElementById('company_id').addEventListener('change', function () {
@@ -178,11 +164,12 @@ sellForm.addEventListener('submit', async function (e) {
             btn.textContent = 'Submit sell order';
             return;
         }
-        successAlert.textContent = 'Sell order submitted! ' + data.quantity + ' shares, you will receive MWK ' + data.you_will_receive + '. Awaiting broker approval. Your Sale Note will be available in Order History once the sale is approved.';
+              successAlert.textContent = 'Sell order submitted! ' + data.quantity.toLocaleString() + ' shares are awaiting approval. The selling price and your net proceeds will be confirmed when the order is approved.';
+
         successAlert.classList.add('show');
         showToast('Sell order submitted successfully!', 'success');
         sellForm.reset();
-        document.getElementById('orderSummary').innerHTML = '<div class="empty-state">Select a company and enter a quantity to see the breakdown.</div>';
+                updateSummary();
         btn.disabled = false;
         btn.textContent = 'Submit sell order';
 
@@ -194,3 +181,4 @@ sellForm.addEventListener('submit', async function (e) {
     }
 });
 
+updateSummary();

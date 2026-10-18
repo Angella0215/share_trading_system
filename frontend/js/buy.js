@@ -73,53 +73,15 @@ async function loadCompanies() {
     }
 }
 
-// Mirrors the backend's tiered commission calculation exactly, so the
-// investor sees the correct number before they submit.
-function calculateCommission(shareCost) {
-    if (shareCost <= 50000) {
-        return shareCost * 0.02;
-    } else if (shareCost <= 100000) {
-        return (50000 * 0.02) + ((shareCost - 50000) * 0.015);
-    } else {
-        return (50000 * 0.02) + (50000 * 0.015) + ((shareCost - 100000) * 0.01);
-    }
-}
-
 function updateSummary() {
-    const companyId = document.getElementById('company_id').value;
-    const amount = parseFloat(document.getElementById('amount').value);
-    const summaryEl = document.getElementById('orderSummary');
-
-    if (!companyId || !amount || amount <= 0) {
-        summaryEl.innerHTML = '<div class="empty-state">Select a company and enter an amount to see the breakdown.</div>';
-        return;
-    }
-
-    const company = companiesData.find(function (c) { return c.company_id == companyId; });
-    if (!company) return;
-
-    const price = parseFloat(company.current_price);
-    const quantity = Math.floor(amount / price);
-
-    if (quantity < 1) {
-        summaryEl.innerHTML = '<div class="empty-state">Amount is too low to buy at least 1 share at MWK ' + price.toFixed(2) + '.</div>';
-        return;
-    }
-
-    const shareCost = quantity * price;
-    const commission = calculateCommission(shareCost);
-    const vat = commission * 0.175;
-    const flatCharge = 50;
-    const total = shareCost + commission + vat + flatCharge;
-
-    summaryEl.innerHTML =
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Shares</span><span class="mono">' + quantity.toLocaleString() + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Price per share</span><span class="mono">MWK ' + price.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Share cost</span><span class="mono">MWK ' + shareCost.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">Commission</span><span class="mono">MWK ' + commission.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:12px;"><span style="color:var(--slate); font-size:13.5px;">VAT (17.5%)</span><span class="mono">MWK ' + vat.toFixed(2) + '</span></div>' +
-        '<div style="display:flex; justify-content:space-between; margin-bottom:16px;"><span style="color:var(--slate); font-size:13.5px;">Flat charge</span><span class="mono">MWK 50.00</span></div>' +
-        '<div style="display:flex; justify-content:space-between; padding-top:16px; border-top:1px solid var(--border);"><strong>Total</strong><strong class="mono">MWK ' + total.toFixed(2) + '</strong></div>';
+    document.getElementById('orderSummary').innerHTML =
+        '<ol style="padding-left:18px; font-size:13.5px; color:var(--slate); line-height:1.8;">' +
+        '<li>Transfer the amount you want to invest to the SML account shown on this page.</li>' +
+        '<li>Upload your proof of payment and submit your order.</li>' +
+        '<li>Our staff verify your payment and your account.</li>' +
+        '<li>When your order receives final approval, the share price on that day is used to work out your number of shares. Commission, VAT and the K50 flat charge are taken from your deposit.</li>' +
+        '<li>Your shares, price and fees then appear in Order History and on your Deal Note.</li>' +
+        '</ol>';
 }
 
 document.getElementById('company_id').addEventListener('change', updateSummary);
@@ -178,7 +140,7 @@ buyForm.addEventListener('submit', async function (e) {
             btn.textContent = 'Submit buy order';
             return;
         }
-        successAlert.textContent = 'Buy order submitted! ' + data.quantity + ' shares, total MWK ' + data.total_amount + '. Awaiting broker approval.';
+        successAlert.textContent = 'Buy order submitted! Your deposit of MWK ' + data.amount_deposited + ' is awaiting approval. Your shares, price and fees will be confirmed when the order is approved.';
         successAlert.classList.add('show');
         showToast('Buy order submitted successfully!', 'success');
         buyForm.reset();

@@ -11,6 +11,26 @@ function calculateCommission(shareCost) {
     }
     return commission;
 }
+// Works out how many whole shares a deposit can buy at a given price.
+// The deposit covers the shares plus commission, VAT and the flat charge,
+// so we step down from the largest possible quantity until the total fits.
+function sizeBuyOrder(amount, price) {
+    const flatCharge = 50;
+    let quantity = Math.floor(amount / price);
+
+    while (quantity > 0) {
+        const shareCost = quantity * price;
+        const commission = calculateCommission(shareCost);
+        const vat = commission * 0.175;
+        const total = shareCost + commission + vat + flatCharge;
+
+        if (total <= amount) {
+            return { quantity, shareCost, commission, vat, flatCharge, total };
+        }
+        quantity--;
+    }
+    return null;
+}
 function addBusinessDays(startDate, days) {
     const result = new Date(startDate);
     let added = 0;
@@ -59,40 +79,27 @@ exports.createBuyOrder = async (req, res) => {
         }
 
         const price = parseFloat(companyRows[0].current_price);
-        const quantity = Math.floor(amount / price);
 
-        if (quantity < 1) {
-            return res.status(400).json({ message: 'Amount is too low to purchase at least 1 share at the current price.' });
+        // The deposit must be enough for at least one share at today's price.
+        // The real quantity, price and fees are fixed later, at final approval.
+        if (!sizeBuyOrder(parseFloat(amount), price)) {
+            return res.status(400).json({ message: 'The amount is too low to buy at least one share, including fees.' });
         }
-
-        const shareCost = quantity * price;
-        const commission = calculateCommission(shareCost);
-        const vat = commission * 0.175;
-        const flatCharge = 50;
-        const totalAmount = shareCost + commission + vat + flatCharge;
 
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 14);
 
-       const [result] = await db.query(
-            `INSERT INTO buy_orders 
-            (investor_id, company_id, quantity, price, commission, vat, total_amount, expiry_date, proof_of_payment_path, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [investor_id, company_id, quantity, price, commission.toFixed(2), vat.toFixed(2), totalAmount.toFixed(2), expiryDate.toISOString().split('T')[0], proofOfPaymentPath]
-        ); 
-
-
+        const [result] = await db.query(
+            `INSERT INTO buy_orders
+            (investor_id, company_id, amount_deposited, expiry_date, proof_of_payment_path, status)
+            VALUES (?, ?, ?, ?, ?, 'pending')`,
+            [investor_id, company_id, parseFloat(amount).toFixed(2), expiryDate.toISOString().split('T')[0], proofOfPaymentPath]
+        );
 
         res.status(201).json({
             message: 'Buy order submitted successfully.',
             order_id: result.insertId,
-            quantity,
-            price,
-            share_cost: shareCost.toFixed(2),
-            commission: commission.toFixed(2),
-            vat: vat.toFixed(2),
-            flat_charge: flatCharge,
-            total_amount: totalAmount.toFixed(2),
+            amount_deposited: parseFloat(amount).toFixed(2),
             expiry_date: expiryDate.toISOString().split('T')[0]
         });
 
@@ -148,9 +155,21 @@ exports.finalApproveBuyOrder = async (req, res) => {
             return res.status(403).json({ message: 'The final approver must be different from the first approver (maker-checker control).' });
         }
 
+        // Price the order now, at final approval, using today's share price.
+        const [companyRows] = await db.query('SELECT current_price FROM companies WHERE company_id = ?', [order.company_id]);
+        const currentPrice = parseFloat(companyRows[0].current_price);
+        const sized = sizeBuyOrder(parseFloat(order.amount_deposited), currentPrice);
+
+        if (!sized) {
+            return res.status(400).json({ message: 'The deposited amount is too low to buy one share at the current price of MWK ' + currentPrice.toFixed(2) + '. Please contact the investor.' });
+        }
+
+        order.quantity = sized.quantity;
+        order.price = currentPrice;
+
         await db.query(
-            'UPDATE buy_orders SET status = ?, broker_id = ? WHERE order_id = ?',
-            ['approved', final_approver_id, order_id]
+            'UPDATE buy_orders SET quantity = ?, price = ?, commission = ?, vat = ?, total_amount = ?, status = ?, broker_id = ? WHERE order_id = ?',
+            [sized.quantity, currentPrice, sized.commission.toFixed(2), sized.vat.toFixed(2), sized.total.toFixed(2), 'approved', final_approver_id, order_id]
         );
 
         const [existingPortfolio] = await db.query(
@@ -178,7 +197,7 @@ exports.finalApproveBuyOrder = async (req, res) => {
             [order.investor_id, order.company_id, order.order_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Buy order fully approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
+        res.status(200).json({ message: 'Buy order fully approved: ' + order.quantity.toLocaleString() + ' shares at MWK ' + order.price.toFixed(2) + '. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
@@ -215,36 +234,23 @@ exports.createSellOrder = async (req, res) => {
             return res.status(404).json({ message: 'Company not found.' });
         }
 
-        const price = parseFloat(companyRows[0].current_price);
-        const shareValue = quantity * price;
-        const commission = calculateCommission(shareValue);
-        const vat = commission * 0.175;
-        const flatCharge = 50;
-        const totalAmount = shareValue - commission - vat - flatCharge;
-
+                // Price, commission, VAT and net proceeds are fixed later, at final approval.
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 14);
 
         const [result] = await db.query(
-            `INSERT INTO sell_orders 
-            (investor_id, company_id, quantity, price, commission, vat, total_amount, expiry_date, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [investor_id, company_id, quantity, price, commission.toFixed(2), vat.toFixed(2), totalAmount.toFixed(2), expiryDate.toISOString().split('T')[0]]
+            `INSERT INTO sell_orders
+            (investor_id, company_id, quantity, expiry_date, status)
+            VALUES (?, ?, ?, ?, 'pending')`,
+            [investor_id, company_id, parseInt(quantity), expiryDate.toISOString().split('T')[0]]
         );
 
         res.status(201).json({
             message: 'Sell order submitted successfully.',
             sell_id: result.insertId,
-            quantity,
-            price,
-            share_value: shareValue.toFixed(2),
-            commission: commission.toFixed(2),
-            vat: vat.toFixed(2),
-            flat_charge: flatCharge,
-            you_will_receive: totalAmount.toFixed(2),
+            quantity: parseInt(quantity),
             expiry_date: expiryDate.toISOString().split('T')[0]
         });
-
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
@@ -306,9 +312,24 @@ exports.finalApproveSellOrder = async (req, res) => {
             return res.status(400).json({ message: 'Investor no longer holds enough shares for this order.' });
         }
 
+               // Price the sale now, at final approval, using today's share price.
+        const [companyRows] = await db.query('SELECT current_price FROM companies WHERE company_id = ?', [order.company_id]);
+        const currentPrice = parseFloat(companyRows[0].current_price);
+        const shareValue = order.quantity * currentPrice;
+        const commission = calculateCommission(shareValue);
+        const vat = commission * 0.175;
+        const flatCharge = 50;
+        const netProceeds = shareValue - commission - vat - flatCharge;
+
+        if (netProceeds <= 0) {
+            return res.status(400).json({ message: 'At the current price of MWK ' + currentPrice.toFixed(2) + ', the value of this sale does not cover the fees. Please contact the investor.' });
+        }
+
+        order.price = currentPrice;
+
         await db.query(
-            'UPDATE sell_orders SET status = ?, broker_id = ? WHERE sell_id = ?',
-            ['approved', final_approver_id, sell_id]
+            'UPDATE sell_orders SET price = ?, commission = ?, vat = ?, total_amount = ?, status = ?, broker_id = ? WHERE sell_id = ?',
+            [currentPrice, commission.toFixed(2), vat.toFixed(2), netProceeds.toFixed(2), 'approved', final_approver_id, sell_id]
         );
 
         await db.query(
@@ -324,12 +345,13 @@ exports.finalApproveSellOrder = async (req, res) => {
             [order.investor_id, order.company_id, order.sell_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
 
-        res.status(200).json({ message: 'Sell order fully approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
+        res.status(200).json({ message: 'Sell order fully approved: ' + order.quantity.toLocaleString() + ' shares at MWK ' + currentPrice.toFixed(2) + '. Net proceeds MWK ' + netProceeds.toFixed(2) + '. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
 exports.getMyOrders = async (req, res) => {
     const user_id = req.user.user_id;
 
@@ -341,13 +363,13 @@ exports.getMyOrders = async (req, res) => {
         const investor_id = investorRows[0].investor_id;
 
         const [buyOrders] = await db.query(
-            `SELECT order_id AS id, 'buy' AS type, company_id, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
+            `SELECT order_id AS id, 'buy' AS type, company_id, amount_deposited, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
              FROM buy_orders WHERE investor_id = ?`,
             [investor_id]
         );
 
         const [sellOrders] = await db.query(
-            `SELECT sell_id AS id, 'sell' AS type, company_id, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
+            `SELECT sell_id AS id, 'sell' AS type, company_id, NULL AS amount_deposited, quantity, price, commission, vat, total_amount, status, created_at, expiry_date
              FROM sell_orders WHERE investor_id = ?`,
             [investor_id]
         );
@@ -374,7 +396,6 @@ exports.getMyOrders = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
 
 exports.getPendingBuyOrders = async (req, res) => {
     try {

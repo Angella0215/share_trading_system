@@ -71,9 +71,7 @@ function renderOrderPage() {
             '<td>' + date + '</td>' +
             '<td>' + typeLabel + '</td>' +
             '<td>' + o.company_name + ' <span class="mono" style="color:var(--slate);">(' + o.ticker + ')</span></td>' +
-            '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
-            '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
-            '<td class="mono">MWK ' + parseFloat(o.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+                        buildAmountCells(o) +
               '<td>' + buildStatusPill(o.status) + '</td>' +
             '<td>' + buildSettlementCell(o) + '</td>' +
             '<td>' +
@@ -210,4 +208,29 @@ async function downloadSaleNote(sellId) {
     } catch (err) {
         showToast('Could not reach the server.', 'error');
     }
+}
+function buildAmountCells(o) {
+    const money = function (n) {
+        return parseFloat(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+    const label = o.status === 'rejected' ? '-' : 'At approval';
+
+    // A buy order has no quantity, price or fees until final approval.
+    if (o.type === 'buy' && o.quantity === null) {
+        return '<td class="mono" style="color:var(--slate);">' + label + '</td>' +
+               '<td class="mono" style="color:var(--slate);">' + label + '</td>' +
+               '<td class="mono">MWK ' + money(o.amount_deposited) +
+               '<br><span style="font-size:11px; color:var(--slate);">deposited</span></td>';
+    }
+
+    // A sell order has a quantity but no price or fees until final approval.
+    if (o.type === 'sell' && o.price === null) {
+        return '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
+               '<td class="mono" style="color:var(--slate);">' + label + '</td>' +
+               '<td class="mono" style="color:var(--slate);">' + label + '</td>';
+    }
+
+    return '<td class="mono">' + o.quantity.toLocaleString() + '</td>' +
+           '<td class="mono">MWK ' + parseFloat(o.price).toFixed(2) + '</td>' +
+           '<td class="mono">MWK ' + money(o.total_amount) + '</td>';
 }
