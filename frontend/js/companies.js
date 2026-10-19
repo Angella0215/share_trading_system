@@ -61,8 +61,8 @@ function renderPage() {
     const start = (currentPage - 1) * pageSize;
     const items = allCompanyItems.slice(start, start + pageSize);
 
-     let html = '<table class="data-table"><thead><tr>' +
-        '<th>Company</th><th>Ticker</th><th>Sector</th><th>Price (MWK)</th><th>Change</th><th>Last Updated</th><th></th>' +
+    let html = '<table class="data-table"><thead><tr>' +
+        '<th>Company</th><th>Ticker</th><th>Sector</th><th>Price (MWK)</th><th>Available shares</th><th>Change</th><th>Last Updated</th><th></th>' +
         '</tr></thead><tbody>';
 
     items.forEach(function (item) {
@@ -81,14 +81,23 @@ function renderPage() {
             }
         }
 
+        const avail = Number(c.available_shares) || 0;
+        const availHtml = avail > 0
+            ? avail.toLocaleString()
+            : '<span style="color:var(--red);">Sold out</span>';
+        const buyHtml = avail > 0
+            ? '<a href="buy.html?company=' + c.company_id + '" class="btn btn-primary btn-sm">Buy</a>'
+            : '<button class="btn btn-primary btn-sm" disabled>Buy</button>';
+
         html += '<tr>' +
             '<td>' + c.company_name + '</td>' +
             '<td class="mono">' + c.ticker + '</td>' +
             '<td>' + (c.sector || '-') + '</td>' +
             '<td class="mono">' + price + '</td>' +
+            '<td class="mono">' + availHtml + '</td>' +
             '<td class="mono">' + changeHtml + '</td>' +
             '<td style="font-size:12px; color:var(--slate);">' + formatLastUpdated(c.last_updated) + '</td>' +
-            '<td><a href="buy.html?company=' + c.company_id + '" class="btn btn-primary btn-sm">Buy</a></td>' +
+            '<td>' + buyHtml + '</td>' +
             '</tr>';
     });
 

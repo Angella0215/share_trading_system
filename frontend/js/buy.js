@@ -53,9 +53,13 @@ async function loadCompanies() {
         companiesData = await res.json();
         const select = document.getElementById('company_id');
         companiesData.forEach(function (c) {
+            const avail = Number(c.available_shares) || 0;
             const opt = document.createElement('option');
             opt.value = c.company_id;
-            opt.textContent = c.company_name + ' (' + c.ticker + ') - MWK ' + parseFloat(c.current_price).toFixed(2);
+            opt.textContent = c.company_name + ' (' + c.ticker + ') - MWK ' +
+                parseFloat(c.current_price).toFixed(2) + ' - ' +
+                (avail > 0 ? avail.toLocaleString() + ' available' : 'Sold out');
+            opt.disabled = avail <= 0;
             select.appendChild(opt);
         });
 
