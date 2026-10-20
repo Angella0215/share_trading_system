@@ -25,6 +25,21 @@ async function blockIfNotQueueHead(req, res, table, idCol, order, status, entity
     return false;
 }
 
+// Sends the investor a message from the broker (shows in their Messages page).
+async function notifyInvestor(brokerUserId, investorId, text) {
+    try {
+        const [rows] = await db.query('SELECT user_id FROM investors WHERE investor_id = ?', [investorId]);
+        if (rows.length > 0) {
+            await db.query(
+                'INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)',
+                [brokerUserId, rows[0].user_id, text]
+            );
+        }
+    } catch (error) {
+        console.error('Could not notify investor:', error.message);
+    }
+}
+
 function calculateCommission(shareCost) {
     let commission = 0;
     if (shareCost <= 50000) {
@@ -627,6 +642,99 @@ exports.getDealNote = async (req, res) => {
             settlement_date: t.settlement_date,
             broker: 'Stockbrokers Malawi Limited'
         });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.rejectBuyOrder = async (req, res) => {
+    const { order_id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+
+    if (reason.length < 5) {
+        return res.status(400).json({ message: 'Please give a reason (at least 5 characters).' });
+    }
+
+    try {
+        const [orderRows] = await db.query(
+            `SELECT bo.*, c.company_name FROM buy_orders bo
+             JOIN companies c ON bo.company_id = c.company_id
+             WHERE bo.order_id = ?`, [order_id]
+        );
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.status !== 'pending' && order.status !== 'first_approved') {
+            return res.status(400).json({ message: `This order is already ${order.status} and cannot be cancelled.` });
+        }
+
+        const [result] = await db.query(
+            "UPDATE buy_orders SET status = 'rejected' WHERE order_id = ? AND status IN ('pending', 'first_approved')",
+            [order_id]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(400).json({ message: 'This order was just updated by someone else.' });
+        }
+
+        await logAudit(req.user, 'order_rejected', 'buy_order', order.order_id, order.company_id,
+            'Cancelled buy order #' + order.order_id + '. Reason: ' + reason);
+
+        await notifyInvestor(req.user.user_id, order.investor_id,
+            'Your buy order #' + order.order_id + ' for ' + order.company_name + ' was cancelled by Stockbrokers Malawi. ' +
+            'Reason: ' + reason + '. Please contact your broker regarding your deposit of MWK ' +
+            parseFloat(order.amount_deposited).toFixed(2) + '.');
+
+        res.status(200).json({ message: 'Buy order cancelled and the investor has been notified.' });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.rejectSellOrder = async (req, res) => {
+    const { sell_id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+
+    if (reason.length < 5) {
+        return res.status(400).json({ message: 'Please give a reason (at least 5 characters).' });
+    }
+
+    try {
+        const [orderRows] = await db.query(
+            `SELECT so.*, c.company_name FROM sell_orders so
+             JOIN companies c ON so.company_id = c.company_id
+             WHERE so.sell_id = ?`, [sell_id]
+        );
+        if (orderRows.length === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        const order = orderRows[0];
+
+        if (order.status !== 'pending' && order.status !== 'first_approved') {
+            return res.status(400).json({ message: `This order is already ${order.status} and cannot be cancelled.` });
+        }
+
+        const [result] = await db.query(
+            "UPDATE sell_orders SET status = 'rejected' WHERE sell_id = ? AND status IN ('pending', 'first_approved')",
+            [sell_id]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(400).json({ message: 'This order was just updated by someone else.' });
+        }
+
+        await logAudit(req.user, 'order_rejected', 'sell_order', order.sell_id, order.company_id,
+            'Cancelled sell order #' + order.sell_id + '. Reason: ' + reason);
+
+        await notifyInvestor(req.user.user_id, order.investor_id,
+            'Your sell order #' + order.sell_id + ' for ' + order.quantity + ' ' + order.company_name +
+            ' shares was cancelled by Stockbrokers Malawi. Reason: ' + reason + '.');
+
+        res.status(200).json({ message: 'Sell order cancelled and the investor has been notified.' });
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });

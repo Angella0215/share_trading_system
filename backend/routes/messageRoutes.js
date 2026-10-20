@@ -4,6 +4,7 @@ const messageController = require('../controllers/messageController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
 router.post('/', verifyToken, messageController.sendMessage);
+router.get('/unread-count', verifyToken, messageController.getUnreadCount);
 router.get('/:other_user_id', verifyToken, messageController.getConversation);
 
 module.exports = router;

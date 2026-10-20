@@ -87,3 +87,47 @@ function showToast(message, type = 'success') {
         }, 300);
     }, 6000);
 }
+// Shows an unread-message badge on the sidebar "Messages" link and pops up
+// a notice when a new message arrives while the page is open.
+(function () {
+    let lastCount = null;
+
+    async function checkUnread() {
+        const token = localStorage.getItem('token');
+        const link = document.querySelector('.sidebar-nav a[href="messages.html"]');
+        if (!token || !link) return;
+
+        try {
+            const res = await fetch(API_BASE + '/messages/unread-count', {
+                headers: { 'Authorization': 'Bearer ' + token },
+                cache: 'no-store'
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            let badge = link.querySelector('.nav-badge');
+            if (data.total > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'nav-badge';
+                    link.appendChild(badge);
+                }
+                badge.textContent = data.total > 99 ? '99+' : data.total;
+            } else if (badge) {
+                badge.remove();
+            }
+
+            if (lastCount !== null && data.total > lastCount) {
+                showToast('You have a new message', 'success');
+            }
+            lastCount = data.total;
+        } catch (err) {
+            // Ignore network errors; we'll try again on the next check.
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        checkUnread();
+        setInterval(checkUnread, 15000);
+    });
+})();

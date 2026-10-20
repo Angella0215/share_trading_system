@@ -17,14 +17,17 @@ function fileUrl(path) {
 }
 
 function buildActionCell(item, idField, firstFn, finalFn) {
+    const rejectFn = firstFn.indexOf('Buy') !== -1 ? 'rejectBuy' : 'rejectSell';
+    const cancelBtn = ' <button class="btn btn-outline btn-sm" onclick="' + rejectFn + '(' + item[idField] + ')">Cancel</button>';
+
     let actionCell = '';
     if (item.status === 'pending') {
-        actionCell = '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>';
+        actionCell = '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>' + cancelBtn;
     } else if (item.status === 'first_approved') {
         if (item.first_approver_id == currentUser.user_id) {
-            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>';
+            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>' + cancelBtn;
         } else {
-            actionCell = '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>';
+            actionCell = '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>' + cancelBtn;
         }
     }
     return actionCell;
@@ -133,6 +136,42 @@ async function runApproval(endpoint, reloadFn) {
             reloadFn();
         } else {
             showToast(data.message || 'Approval failed.', 'error');
+        }
+    } catch (err) {
+        showToast('Could not reach the server.', 'error');
+    }
+}
+
+async function rejectBuy(orderId) {
+    await runReject('/orders/buy/' + orderId + '/reject', loadBuyOrders);
+}
+
+async function rejectSell(sellId) {
+    await runReject('/orders/sell/' + sellId + '/reject', loadSellOrders);
+}
+
+async function runReject(endpoint, reloadFn) {
+    const reason = prompt('Reason for cancelling this order. The investor will receive this message:');
+    if (reason === null) return; // broker pressed Cancel on the box
+
+    if (reason.trim().length < 5) {
+        showToast('Please give a reason (at least 5 characters).', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch(API_BASE + endpoint, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ reason: reason.trim() })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast(data.message, 'success');
+            reloadFn();
+        } else {
+            showToast(data.message || 'Could not cancel the order.', 'error');
         }
     } catch (err) {
         showToast('Could not reach the server.', 'error');

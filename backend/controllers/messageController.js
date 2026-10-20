@@ -43,8 +43,29 @@ exports.getConversation = async (req, res) => {
             [currentUser, other_user_id, other_user_id, currentUser]
         );
 
+        // Opening the conversation means the messages sent to me are now read.
+        await db.query(
+            'UPDATE messages SET is_read = 1 WHERE receiver = ? AND sender = ? AND is_read = 0',
+            [currentUser, other_user_id]
+        );
+
         res.status(200).json(rows);
 
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.getUnreadCount = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT sender, COUNT(*) AS count FROM messages WHERE receiver = ? AND is_read = 0 GROUP BY sender',
+            [req.user.user_id]
+        );
+
+        const total = rows.reduce(function (sum, r) { return sum + Number(r.count); }, 0);
+
+        res.status(200).json({ total, by_sender: rows });
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }

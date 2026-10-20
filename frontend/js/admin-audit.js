@@ -19,7 +19,9 @@ const actionLabels = {
     first_approved: 'First approval',
     final_approved: 'Final approval',
     order_cancelled: 'Order cancelled',
+    order_rejected: 'Cancelled by broker',
     queue_skip_blocked: 'Queue skip blocked'
+    
 };
 
 async function loadAudit() {
