@@ -135,3 +135,45 @@ function showToast(message, type = 'success', duration = 60000) {
         setInterval(checkUnread, 15000);
     });
 })();
+
+// Helpers for opening protected documents (KYC files, proof of payment).
+function docFilename(path) {
+    if (!path) return null;
+    return String(path).replace(/\\/g, '/').split('/').pop();
+}
+
+function docButton(path, label) {
+    const file = docFilename(path);
+    if (!file) return '';
+    const safe = file.replace(/[^\w.\-]/g, '');
+    return '<button type="button" class="btn btn-outline btn-sm" onclick="openDocument(\'' + safe + '\')">' + (label || 'View') + '</button>';
+}
+
+async function openDocument(filename) {
+    // Open the tab straight away (from the click) so the browser doesn't block it.
+    const tab = window.open('', '_blank');
+
+    try {
+        const res = await fetch(API_BASE + '/files/' + encodeURIComponent(filename), {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+
+        if (!res.ok) {
+            let message = 'Could not open the document.';
+            try { message = (await res.json()).message || message; } catch (e) { /* not JSON */ }
+            throw new Error(message);
+        }
+
+        const url = URL.createObjectURL(await res.blob());
+        if (tab) {
+            tab.location = url;
+        } else {
+            window.open(url, '_blank');
+        }
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+
+    } catch (err) {
+        if (tab) tab.close();
+        showToast(err.message, 'error');
+    }
+}

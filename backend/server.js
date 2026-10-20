@@ -10,13 +10,14 @@ const messageRoutes = require('./routes/messageRoutes');
 const statementRoutes = require('./routes/statementRoutes');
 const auditRoutes = require('./routes/auditRoutes');
 const dividendRoutes = require('./routes/dividendRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());  // <-- ADD THIS LINE
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+
 
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
@@ -31,6 +32,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/statements', statementRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/dividends', dividendRoutes);
+app.use('/api/files', fileRoutes);
 
 // Turns upload errors (wrong file type, file too large) into a readable JSON message.
 app.use((err, req, res, next) => {

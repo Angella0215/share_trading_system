@@ -59,10 +59,9 @@ function renderApplications(applications) {
             '</div>' +
 
             '<div style="display:flex; gap:10px; margin-bottom:16px;">' +
-                (fileUrl(a.utility_receipt_path) ? '<a href="' + fileUrl(a.utility_receipt_path) + '" target="_blank" class="btn btn-outline btn-sm">View utility receipt</a>' : '') +
-                (fileUrl(a.bank_statement_path) ? '<a href="' + fileUrl(a.bank_statement_path) + '" target="_blank" class="btn btn-outline btn-sm">View bank statement</a>' : '') +
-                (fileUrl(a.id_document_path) ? '<a href="' + fileUrl(a.id_document_path) + '" target="_blank" class="btn btn-outline btn-sm">View ID document</a>' : '') +
-            '</div>' +
+             docButton(a.utility_receipt_path, 'View utility receipt') +
+docButton(a.bank_statement_path, 'View bank statement') +
+docButton(a.id_document_path, 'View ID document') + '</div>' +
 
             '<div class="hint" style="margin-bottom:12px;">Check that the meter/bill number above matches the number shown on the uploaded utility receipt before approving.</div>' +
 

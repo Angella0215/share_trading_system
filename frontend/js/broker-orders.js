@@ -57,7 +57,7 @@ async function loadBuyOrders() {
                 '<td>' + o.firstname + ' ' + o.surname + '<br><span style="color:var(--slate); font-size:12px;">' + o.email + '</span></td>' +
                 '<td>' + o.company_name + ' <span class="mono">(' + o.ticker + ')</span></td>' +
                                '<td class="mono">MWK ' + parseFloat(o.amount_deposited).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
-                '<td>' + (fileUrl(o.proof_of_payment_path) ? '<a href="' + fileUrl(o.proof_of_payment_path) + '" target="_blank" class="btn btn-outline btn-sm">View</a>' : '-') + '</td>' +
+                '<td>' + (docButton(o.proof_of_payment_path, 'View') || '-') + '</td>' +
                 '<td><span class="status-pill status-' + o.status + '">' + o.status.replace('_', ' ') + '</span></td>' +
                 '<td>' + actionCell + '</td>' +
                 '</tr>';

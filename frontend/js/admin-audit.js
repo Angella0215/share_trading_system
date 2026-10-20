@@ -26,7 +26,8 @@ const actionLabels = {
     dividend_first_approved: 'Dividend first approval',
     dividend_final_approved: 'Dividend final approval',
     dividend_paid: 'Dividend paid',
-    dividend_cancelled: 'Dividend cancelled'
+    dividend_cancelled: 'Dividend cancelled',
+  document_viewed: 'Document opened',
 };
 
 async function loadAudit() {
