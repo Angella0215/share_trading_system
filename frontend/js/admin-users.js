@@ -38,22 +38,23 @@ function renderUserPage() {
     const users = allUserItems.slice(start, start + userPageSize);
 
     let html = '<table class="data-table"><thead><tr>' +
-            '<th>Name</th><th>Email</th><th>Role</th><th>Joined</th>' +
-            '</tr></thead><tbody>';
+        '<th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th></th>' +
+        '</tr></thead><tbody>';
 
-        users.forEach(function (u) {
-            const date = new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            const roleColor = u.role === 'admin' ? 'var(--red)' : (u.role === 'broker' ? 'var(--brand)' : 'var(--slate)');
+    users.forEach(function (u) {
+        const date = new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const roleColor = u.role === 'admin' ? 'var(--red)' : (u.role === 'broker' ? 'var(--brand)' : 'var(--slate)');
 
-            html += '<tr>' +
-                '<td>' + u.fullname + '</td>' +
-                '<td>' + u.email + '</td>' +
-                '<td><span style="color:' + roleColor + '; font-weight:600; text-transform:capitalize;">' + u.role + '</span></td>' +
-                '<td class="mono">' + date + '</td>' +
-                '</tr>';
-            });
+        html += '<tr>' +
+            '<td>' + u.fullname + '</td>' +
+            '<td>' + u.email + '</td>' +
+            '<td><span style="color:' + roleColor + '; font-weight:600; text-transform:capitalize;">' + u.role + '</span></td>' +
+            '<td class="mono">' + date + '</td>' +
+            '<td><button class="btn btn-outline btn-sm" onclick="resetPassword(' + u.user_id + ')">Reset password</button></td>' +
+            '</tr>';
+    });
 
-        html += '</tbody></table>';
+    html += '</tbody></table>';
 
     if (totalPages > 1) {
         html += '<div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:16px;">' +
@@ -65,7 +66,6 @@ function renderUserPage() {
 
     wrap.innerHTML = html;
 }
-
 function changeUserPage(direction) {
     const totalPages = Math.ceil(allUserItems.length / userPageSize);
     currentUserPage = Math.max(1, Math.min(totalPages, currentUserPage + direction));
@@ -113,3 +113,47 @@ document.getElementById('brokerForm').addEventListener('submit', async function 
     btn.disabled = false;
     btn.textContent = 'Create broker';
 });
+
+async function resetPassword(userId) {
+    const user = allUserItems.find(function (u) { return u.user_id === userId; });
+    if (!user) return;
+
+    const input = prompt(
+        'Reset password for ' + user.fullname + ' (' + user.role + ').\n\n' +
+        'Type a new password (at least 8 characters), or leave blank to generate one:'
+    );
+    if (input === null) return; // pressed Cancel
+
+    const typed = input.trim();
+    if (typed && typed.length < 8) {
+        alert('Password must be at least 8 characters.');
+        return;
+    }
+
+    if (!confirm('Reset the password for ' + user.fullname + '? Their old password will stop working.')) return;
+
+    try {
+        const res = await fetch(API_BASE + '/users/' + userId + '/password', {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ new_password: typed })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message || 'Could not reset the password.');
+            return;
+        }
+
+        if (data.temporary_password) {
+            alert(
+                'New password for ' + user.fullname + ':\n\n' + data.temporary_password +
+                '\n\nCopy it now. It will not be shown again. Give it to the user privately.'
+            );
+        } else {
+            showToast(data.message, 'success');
+        }
+    } catch (err) {
+        alert('Could not reach the server.');
+    }
+}

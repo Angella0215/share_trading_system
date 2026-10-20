@@ -27,7 +27,8 @@ const actionLabels = {
     dividend_final_approved: 'Dividend final approval',
     dividend_paid: 'Dividend paid',
     dividend_cancelled: 'Dividend cancelled',
-  document_viewed: 'Document opened',
+    document_viewed: 'Document opened',
+    password_reset: 'Password reset',
 };
 
 async function loadAudit() {
@@ -51,7 +52,7 @@ async function loadAudit() {
                 day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
             const flagged = r.action === 'queue_skip_blocked';
-           const refPrefix = { buy_order: 'Buy #', sell_order: 'Sell #', dividend: 'Dividend #' };
+           const refPrefix = { buy_order: 'Buy #', sell_order: 'Sell #', dividend: 'Dividend #', user: 'User #' };
             const orderRef = r.entity_type ? (refPrefix[r.entity_type] || '') + r.entity_id : '-';
 
             html += '<tr' + (flagged ? ' style="background:rgba(220,38,38,0.08);"' : '') + '>' +

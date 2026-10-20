@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const transporter = require('../config/mailer');
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const { logAudit } = require('../utils/audit');
 
 exports.register = async (req, res) => {
     const { fullname, email, phone, password } = req.body;
@@ -277,6 +278,48 @@ exports.createBroker = async (req, res) => {
         );
 
         res.status(201).json({ message: 'Broker account created.', user_id: result.insertId });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
+
+exports.resetUserPassword = async (req, res) => {
+    const { user_id } = req.params;
+    let newPassword = String(req.body.new_password || '').trim();
+    let generated = false;
+
+    if (!newPassword) {
+        // No password typed: make a random one the admin can hand over once.
+        newPassword = crypto.randomBytes(9).toString('base64url');
+        generated = true;
+    } else if (newPassword.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    try {
+        const [users] = await db.query('SELECT user_id, fullname, role FROM users WHERE user_id = ?', [user_id]);
+        if (users.length === 0) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        const target = users[0];
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await db.query(
+            'UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = ?',
+            [hashedPassword, user_id]
+        );
+
+        // The password itself is never written to the log.
+        await logAudit(req.user, 'password_reset', 'user', target.user_id, null,
+            'Reset password for ' + target.fullname + ' (' + target.role + ')');
+
+        const response = { message: 'Password reset for ' + target.fullname + '.' };
+        if (generated) {
+            response.temporary_password = newPassword;
+        }
+        res.status(200).json(response);
 
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
