@@ -8,6 +8,8 @@ const companyRoutes = require('./routes/companyRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const statementRoutes = require('./routes/statementRoutes');
+const auditRoutes = require('./routes/auditRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -26,6 +28,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/statements', statementRoutes);
+app.use('/api/audit', auditRoutes);
 
 app.get('/', async (req, res) => {
     try {

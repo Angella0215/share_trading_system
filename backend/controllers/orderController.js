@@ -1,5 +1,30 @@
 const db = require('../config/db');
 
+const { logAudit } = require('../utils/audit');
+
+// First-come, first-served: returns true (and sends the error) if this order
+// is not the oldest one waiting at this stage for its company.
+async function blockIfNotQueueHead(req, res, table, idCol, order, status, entityType) {
+    const orderId = order[idCol];
+    const [rows] = await db.query(
+        `SELECT ${idCol} AS id, created_at FROM ${table}
+         WHERE company_id = ? AND status = ?
+         ORDER BY created_at ASC, ${idCol} ASC LIMIT 1`,
+        [order.company_id, status]
+    );
+
+    if (rows.length > 0 && Number(rows[0].id) !== Number(orderId)) {
+        await logAudit(req.user, 'queue_skip_blocked', entityType, orderId, order.company_id,
+            'Tried to process order #' + orderId + ' before earlier order #' + rows[0].id);
+        res.status(409).json({
+            message: 'Orders are handled first-come, first-served. Earlier order #' + rows[0].id +
+                ' for this company must be processed first.'
+        });
+        return true;
+    }
+    return false;
+}
+
 function calculateCommission(shareCost) {
     let commission = 0;
     if (shareCost <= 50000) {
@@ -62,6 +87,11 @@ exports.createBuyOrder = async (req, res) => {
     }
 
     const proofOfPaymentPath = req.file.path;
+    const deposit = parseFloat(amount);
+
+    if (isNaN(deposit) || deposit <= 0) {
+        return res.status(400).json({ message: 'Please enter a valid amount.' });
+    }
 
     try {
         const [investorRows] = await db.query('SELECT account_status FROM investors WHERE investor_id = ?', [investor_id]);
@@ -72,54 +102,33 @@ exports.createBuyOrder = async (req, res) => {
             return res.status(403).json({ message: 'Your account must be verified before you can trade.' });
         }
 
-        const [companyRows] = await db.query(
-            'SELECT current_price, available_shares FROM companies WHERE company_id = ?',
-            [company_id]
-        );
+        const [companyRows] = await db.query('SELECT current_price FROM companies WHERE company_id = ?', [company_id]);
         if (companyRows.length === 0) {
             return res.status(404).json({ message: 'Company not found.' });
         }
 
-        const price = parseFloat(companyRows[0].current_price);
-        const available = Number(companyRows[0].available_shares) || 0;
-        const quantity = Math.floor(amount / price);
-
-        if (quantity < 1) {
-            return res.status(400).json({ message: 'Amount is too low to purchase at least 1 share at the current price.' });
+        // Quick sanity check against today's price. The real quantity, price and
+        // fees are fixed later, at final approval.
+        if (!sizeBuyOrder(deposit, parseFloat(companyRows[0].current_price))) {
+            return res.status(400).json({ message: 'Amount is too low to buy at least 1 share once fees are included.' });
         }
-
-        if (quantity > available) {
-            return res.status(400).json({
-                message: 'Only ' + available.toLocaleString() + ' shares are currently available for this company.'
-            });
-        }
-
-        const shareCost = quantity * price;
-        const commission = calculateCommission(shareCost);
-        const vat = commission * 0.175;
-        const flatCharge = 50;
-        const totalAmount = shareCost + commission + vat + flatCharge;
 
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 14);
 
         const [result] = await db.query(
-            `INSERT INTO buy_orders 
-            (investor_id, company_id, quantity, price, commission, vat, total_amount, expiry_date, proof_of_payment_path, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-            [investor_id, company_id, quantity, price, commission.toFixed(2), vat.toFixed(2), totalAmount.toFixed(2), expiryDate.toISOString().split('T')[0], proofOfPaymentPath]
+            `INSERT INTO buy_orders
+            (investor_id, company_id, amount_deposited, expiry_date, proof_of_payment_path, status)
+            VALUES (?, ?, ?, ?, ?, 'pending')`,
+            [investor_id, company_id, deposit.toFixed(2), expiryDate.toISOString().split('T')[0], proofOfPaymentPath]
         );
+
+        await logAudit(req.user, 'order_placed', 'buy_order', result.insertId, company_id, 'Investor placed a buy order, deposit MWK ' + deposit.toFixed(2));
 
         res.status(201).json({
             message: 'Buy order submitted successfully.',
             order_id: result.insertId,
-            quantity,
-            price,
-            share_cost: shareCost.toFixed(2),
-            commission: commission.toFixed(2),
-            vat: vat.toFixed(2),
-            flat_charge: flatCharge,
-            total_amount: totalAmount.toFixed(2),
+            amount_deposited: deposit.toFixed(2),
             expiry_date: expiryDate.toISOString().split('T')[0]
         });
 
@@ -144,10 +153,14 @@ exports.firstApproveBuyOrder = async (req, res) => {
             return res.status(400).json({ message: `This order is already ${order.status}.` });
         }
 
+        if (await blockIfNotQueueHead(req, res, 'buy_orders', 'order_id', order, 'pending', 'buy_order')) return;
+
         await db.query(
             'UPDATE buy_orders SET status = ?, first_approver_id = ?, first_approved_at = NOW() WHERE order_id = ?',
             ['first_approved', approver_id, order_id]
         );
+
+await logAudit(req.user, 'first_approved', 'buy_order', order.order_id, order.company_id, 'First approval of buy order #' + order.order_id);
 
         res.status(200).json({ message: 'Order has first-level approval. A second approver must confirm before it is finalized.' });
 
@@ -172,23 +185,40 @@ exports.finalApproveBuyOrder = async (req, res) => {
             return res.status(400).json({ message: 'This order needs first-level approval before it can be finalized.' });
         }
 
+        if (await blockIfNotQueueHead(req, res, 'buy_orders', 'order_id', order, 'first_approved', 'buy_order')) return;
+
         if (order.first_approver_id === final_approver_id) {
             return res.status(403).json({ message: 'The final approver must be different from the first approver (maker-checker control).' });
+        }
+
+        // The share count and fees are fixed now, at the approval-day price.
+        const [companyRows] = await db.query('SELECT current_price FROM companies WHERE company_id = ?', [order.company_id]);
+        if (companyRows.length === 0) {
+            return res.status(404).json({ message: 'Company not found.' });
+        }
+
+        const price = parseFloat(companyRows[0].current_price);
+        const sized = sizeBuyOrder(parseFloat(order.amount_deposited), price);
+
+        if (!sized) {
+            return res.status(400).json({ message: 'The deposit is too low to buy at least 1 share at today\'s price.' });
         }
 
         // Take the shares out of the available pool. The WHERE clause makes
         // this safe: it only succeeds if enough shares are still available.
         const [stockResult] = await db.query(
             'UPDATE companies SET available_shares = available_shares - ? WHERE company_id = ? AND available_shares >= ?',
-            [order.quantity, order.company_id, order.quantity]
+            [sized.quantity, order.company_id, sized.quantity]
         );
         if (stockResult.affectedRows === 0) {
             return res.status(400).json({ message: 'Not enough shares are available for this company to approve this order.' });
         }
 
         await db.query(
-            'UPDATE buy_orders SET status = ?, broker_id = ? WHERE order_id = ?',
-            ['approved', final_approver_id, order_id]
+            `UPDATE buy_orders
+             SET status = ?, broker_id = ?, quantity = ?, price = ?, commission = ?, vat = ?, total_amount = ?
+             WHERE order_id = ?`,
+            ['approved', final_approver_id, sized.quantity, price, sized.commission.toFixed(2), sized.vat.toFixed(2), sized.total.toFixed(2), order_id]
         );
 
         const [existingPortfolio] = await db.query(
@@ -199,12 +229,12 @@ exports.finalApproveBuyOrder = async (req, res) => {
         if (existingPortfolio.length > 0) {
             await db.query(
                 'UPDATE portfolio SET shares_owned = shares_owned + ? WHERE investor_id = ? AND company_id = ?',
-                [order.quantity, order.investor_id, order.company_id]
+                [sized.quantity, order.investor_id, order.company_id]
             );
         } else {
             await db.query(
                 'INSERT INTO portfolio (investor_id, company_id, shares_owned) VALUES (?, ?, ?)',
-                [order.investor_id, order.company_id, order.quantity]
+                [order.investor_id, order.company_id, sized.quantity]
             );
         }
 
@@ -213,15 +243,16 @@ exports.finalApproveBuyOrder = async (req, res) => {
 
         await db.query(
             'INSERT INTO transactions (investor_id, company_id, buy_order_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, order.order_id, 'buy', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
+            [order.investor_id, order.company_id, order.order_id, 'buy', sized.quantity, price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
+
+        await logAudit(req.user, 'final_approved', 'buy_order', order.order_id, order.company_id, 'Final approval of buy order #' + order.order_id + ': ' + sized.quantity + ' shares at MWK ' + price.toFixed(2));
 
         res.status(200).json({ message: 'Buy order fully approved. Shares added to investor portfolio.', deal_note_number: dealNoteNumber });
     } catch (error) {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
-
 
 exports.createSellOrder = async (req, res) => {
     const { investor_id, company_id, quantity } = req.body;
@@ -263,7 +294,7 @@ exports.createSellOrder = async (req, res) => {
             VALUES (?, ?, ?, ?, 'pending')`,
             [investor_id, company_id, parseInt(quantity), expiryDate.toISOString().split('T')[0]]
         );
-
+await logAudit(req.user, 'order_placed', 'sell_order', result.insertId, company_id, 'Investor placed a sell order for ' + parseInt(quantity) + ' shares');
         res.status(201).json({
             message: 'Sell order submitted successfully.',
             sell_id: result.insertId,
@@ -290,11 +321,13 @@ exports.firstApproveSellOrder = async (req, res) => {
             return res.status(400).json({ message: `This order is already ${order.status}.` });
         }
 
+if (await blockIfNotQueueHead(req, res, 'sell_orders', 'sell_id', order, 'pending', 'sell_order')) return;
+
         await db.query(
             'UPDATE sell_orders SET status = ?, first_approver_id = ?, first_approved_at = NOW() WHERE sell_id = ?',
             ['first_approved', approver_id, sell_id]
         );
-
+await logAudit(req.user, 'first_approved', 'sell_order', order.sell_id, order.company_id, 'First approval of sell order #' + order.sell_id);
         res.status(200).json({ message: 'Order has first-level approval. A second approver must confirm before it is finalized.' });
 
     } catch (error) {
@@ -318,6 +351,8 @@ exports.finalApproveSellOrder = async (req, res) => {
             return res.status(400).json({ message: 'This order needs first-level approval before it can be finalized.' });
         }
 
+        if (await blockIfNotQueueHead(req, res, 'sell_orders', 'sell_id', order, 'first_approved', 'sell_order')) return;
+
         if (order.first_approver_id === final_approver_id) {
             return res.status(403).json({ message: 'The final approver must be different from the first approver (maker-checker control).' });
         }
@@ -331,9 +366,24 @@ exports.finalApproveSellOrder = async (req, res) => {
             return res.status(400).json({ message: 'Investor no longer holds enough shares for this order.' });
         }
 
+        // Price, commission, VAT and net proceeds are fixed now, at the approval-day price.
+        const [companyRows] = await db.query('SELECT current_price FROM companies WHERE company_id = ?', [order.company_id]);
+        if (companyRows.length === 0) {
+            return res.status(404).json({ message: 'Company not found.' });
+        }
+
+        const price = parseFloat(companyRows[0].current_price);
+        const shareValue = order.quantity * price;
+        const commission = calculateCommission(shareValue);
+        const vat = commission * 0.175;
+        const flatCharge = 50;
+        const netProceeds = shareValue - commission - vat - flatCharge;
+
         await db.query(
-            'UPDATE sell_orders SET status = ?, broker_id = ? WHERE sell_id = ?',
-            ['approved', final_approver_id, sell_id]
+            `UPDATE sell_orders
+             SET status = ?, broker_id = ?, price = ?, commission = ?, vat = ?, total_amount = ?
+             WHERE sell_id = ?`,
+            ['approved', final_approver_id, price, commission.toFixed(2), vat.toFixed(2), netProceeds.toFixed(2), sell_id]
         );
 
         await db.query(
@@ -352,8 +402,10 @@ exports.finalApproveSellOrder = async (req, res) => {
 
         await db.query(
             'INSERT INTO transactions (investor_id, company_id, sell_order_id, type, quantity, price, settlement_date, deal_note_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [order.investor_id, order.company_id, order.sell_id, 'sell', order.quantity, order.price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
+            [order.investor_id, order.company_id, order.sell_id, 'sell', order.quantity, price, settlementDate.toISOString().split('T')[0], dealNoteNumber]
         );
+
+        await logAudit(req.user, 'final_approved', 'sell_order', order.sell_id, order.company_id, 'Final approval of sell order #' + order.sell_id + ': ' + order.quantity + ' shares at MWK ' + price.toFixed(2));
 
         res.status(200).json({ message: 'Sell order fully approved. Shares deducted from investor portfolio.', deal_note_number: dealNoteNumber });
 
@@ -493,7 +545,7 @@ exports.cancelBuyOrder = async (req, res) => {
         }
 
         await db.query('UPDATE buy_orders SET status = ? WHERE order_id = ?', ['rejected', order_id]);
-
+        await logAudit(req.user, 'order_cancelled', 'buy_order', order.order_id, order.company_id, 'Investor cancelled buy order #' + order.order_id);
         res.status(200).json({ message: 'Buy order cancelled. Please contact your broker regarding your deposited funds.' });
 
     } catch (error) {
@@ -528,7 +580,7 @@ exports.cancelSellOrder = async (req, res) => {
         }
 
         await db.query('UPDATE sell_orders SET status = ? WHERE sell_id = ?', ['rejected', sell_id]);
-
+        await logAudit(req.user, 'order_cancelled', 'sell_order', order.sell_id, order.company_id, 'Investor cancelled sell order #' + order.sell_id);
         res.status(200).json({ message: 'Sell order cancelled.' });
 
     } catch (error) {

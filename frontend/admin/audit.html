@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Trail - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <span class="mark">SML</span>
+        Stockbrokers Malawi
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="users.html">Users</a>
+        <a href="companies.html">Companies</a>
+        <a href="audit.html" class="active">Audit Trail</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="avatar" id="userAvatar">?</div>
+          <div>
+            <div class="name" id="userName">Loading...</div>
+            <div class="role">Admin</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Audit Trail</h1>
+          <p>Who placed, approved and cancelled orders, and when.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="auditTableWrap">
+          <div class="empty-state">Loading audit trail...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/session.js"></script>
+  <script src="../js/admin-audit.js"></script>
+</body>
+</html>
