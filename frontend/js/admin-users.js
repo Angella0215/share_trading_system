@@ -71,3 +71,45 @@ function changeUserPage(direction) {
     currentUserPage = Math.max(1, Math.min(totalPages, currentUserPage + direction));
     renderUserPage();
 }
+
+document.getElementById('brokerForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const msg = document.getElementById('brokerMsg');
+    const btn = document.getElementById('brokerBtn');
+    msg.textContent = '';
+
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+
+    try {
+        const res = await fetch(API_BASE + '/brokers', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                fullname: document.getElementById('brokerName').value.trim(),
+                email: document.getElementById('brokerEmail').value.trim(),
+                phone: document.getElementById('brokerPhone').value.trim(),
+                password: document.getElementById('brokerPassword').value
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            msg.style.color = 'var(--green)';
+            msg.textContent = data.message;
+            document.getElementById('brokerForm').reset();
+            loadUsers();
+        } else {
+            msg.style.color = 'var(--red)';
+            msg.textContent = data.message || 'Could not create broker.';
+        }
+    } catch (err) {
+        msg.style.color = 'var(--red)';
+        msg.textContent = 'Could not reach the server.';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Create broker';
+});

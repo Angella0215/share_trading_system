@@ -41,6 +41,18 @@
         </div>
       </div>
 
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header"><div class="card-title">Add a broker</div></div>
+  <form id="brokerForm" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; padding:4px 0;">
+    <input type="text" id="brokerName" placeholder="Full name" required style="padding:8px 10px; border:1.5px solid var(--border); border-radius:8px;">
+    <input type="email" id="brokerEmail" placeholder="Email" required style="padding:8px 10px; border:1.5px solid var(--border); border-radius:8px;">
+    <input type="text" id="brokerPhone" placeholder="Phone" style="padding:8px 10px; border:1.5px solid var(--border); border-radius:8px;">
+    <input type="password" id="brokerPassword" placeholder="Password (min 8)" required minlength="8" style="padding:8px 10px; border:1.5px solid var(--border); border-radius:8px;">
+    <button type="submit" class="btn btn-primary btn-sm" id="brokerBtn">Create broker</button>
+  </form>
+  <div id="brokerMsg" style="font-size:13.5px; margin-top:10px;"></div>
+</div>
+
       <div class="card">
         <div id="usersTableWrap">
           <div class="empty-state">Loading users...</div>

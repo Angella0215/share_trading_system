@@ -12,5 +12,6 @@ router.get('/users', verifyToken, requireRole('admin'), authController.getAllUse
 router.post('/request-password-reset', authController.requestPasswordReset);
 router.post('/confirm-password-reset', authController.confirmPasswordReset);
 router.post('/google-login', authController.googleLogin);
+router.post('/brokers', verifyToken, requireRole('admin'), authController.createBroker);
 
 module.exports = router;

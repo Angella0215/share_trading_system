@@ -7,9 +7,10 @@ const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.register = async (req, res) => {
-    const { fullname, email, phone, password, role } = req.body;
+    const { fullname, email, phone, password } = req.body;
+    const role = 'investor'; // public sign-up can only ever create investors
 
-    if (!fullname || !email || !password || !role) {
+    if (!fullname || !email || !password) {
         return res.status(400).json({ message: 'Please fill in all required fields.' });
     }
 
@@ -248,5 +249,36 @@ exports.googleLogin = async (req, res) => {
 
     } catch (error) {
         res.status(401).json({ message: 'Google sign-in failed: ' + error.message });
+    }
+};
+
+exports.createBroker = async (req, res) => {
+    const { fullname, email, phone, password } = req.body;
+
+    if (!fullname || !email || !password) {
+        return res.status(400).json({ message: 'Please provide full name, email and password.' });
+    }
+
+    if (password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    try {
+        const [existing] = await db.query('SELECT user_id FROM users WHERE email = ?', [email]);
+        if (existing.length > 0) {
+            return res.status(409).json({ message: 'Email already registered.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const [result] = await db.query(
+            'INSERT INTO users (fullname, email, phone, password, role) VALUES (?, ?, ?, ?, ?)',
+            [fullname, email, phone || null, hashedPassword, 'broker']
+        );
+
+        res.status(201).json({ message: 'Broker account created.', user_id: result.insertId });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
