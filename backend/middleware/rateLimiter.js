@@ -1,11 +1,12 @@
 const rateLimit = require('express-rate-limit');
 
-// Limits login attempts to prevent brute-force password guessing.
-// Allows 5 attempts per 15 minutes per IP address, then blocks
-// further attempts until the window resets.
+// TESTING ONLY: login attempts are unlimited while skip returns true.
+// Before going live, delete the skip line (or set it to () => false)
+// to bring back the 5 attempts per 15 minutes limit.
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5,
+    skip: () => true,
     message: { message: 'Too many login attempts. Please try again in 15 minutes.' },
     standardHeaders: true,
     legacyHeaders: false
