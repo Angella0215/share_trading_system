@@ -9,6 +9,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const statementRoutes = require('./routes/statementRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const dividendRoutes = require('./routes/dividendRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,7 +30,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/statements', statementRoutes);
 app.use('/api/audit', auditRoutes);
-
+app.use('/api/dividends', dividendRoutes);
 
 // Turns upload errors (wrong file type, file too large) into a readable JSON message.
 app.use((err, req, res, next) => {

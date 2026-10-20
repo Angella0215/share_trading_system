@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dividends - Stockbrokers Malawi Limited</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <span class="mark">SML</span>
+        Stockbrokers Malawi
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="account.html">My Account</a>
+        <a href="companies.html">Companies</a>
+        <a href="buy.html">Buy Shares</a>
+        <a href="sell.html">Sell Shares</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="dividends.html" class="active">Dividends</a>
+        <a href="orders.html">Order History</a>
+        <a href="messages.html">Messages</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="avatar" id="userAvatar">?</div>
+          <div>
+            <div class="name" id="userName">Loading...</div>
+            <div class="role">Investor</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Dividends</h1>
+          <p>Dividends paid on the shares you held on each record date.</p>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+        <div class="card" style="flex:1; min-width:220px;">
+          <div style="font-size:13px; color:var(--slate);">Total received (after tax)</div>
+          <div class="mono" style="font-size:24px; font-weight:700; margin-top:6px;" id="paidTotal">MWK 0.00</div>
+        </div>
+        <div class="card" style="flex:1; min-width:220px;">
+          <div style="font-size:13px; color:var(--slate);">Approved, payment coming</div>
+          <div class="mono" style="font-size:24px; font-weight:700; margin-top:6px;" id="upcomingTotal">MWK 0.00</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Your dividends</div></div>
+        <div id="myDividendsWrap">
+          <div class="empty-state">Loading your dividends...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/session.js"></script>
+  <script src="../js/investor-dividends.js"></script>
+</body>
+</html>

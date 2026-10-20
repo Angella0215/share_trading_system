@@ -20,8 +20,13 @@ const actionLabels = {
     final_approved: 'Final approval',
     order_cancelled: 'Order cancelled',
     order_rejected: 'Cancelled by broker',
-    queue_skip_blocked: 'Queue skip blocked'
-    
+    queue_skip_blocked: 'Queue skip blocked',
+    dividend_declared: 'Dividend declared',
+    dividend_calculated: 'Dividend payouts calculated',
+    dividend_first_approved: 'Dividend first approval',
+    dividend_final_approved: 'Dividend final approval',
+    dividend_paid: 'Dividend paid',
+    dividend_cancelled: 'Dividend cancelled'
 };
 
 async function loadAudit() {
@@ -45,7 +50,8 @@ async function loadAudit() {
                 day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
             const flagged = r.action === 'queue_skip_blocked';
-            const orderRef = r.entity_type ? (r.entity_type === 'buy_order' ? 'Buy #' : 'Sell #') + r.entity_id : '-';
+           const refPrefix = { buy_order: 'Buy #', sell_order: 'Sell #', dividend: 'Dividend #' };
+            const orderRef = r.entity_type ? (refPrefix[r.entity_type] || '') + r.entity_id : '-';
 
             html += '<tr' + (flagged ? ' style="background:rgba(220,38,38,0.08);"' : '') + '>' +
                 '<td class="mono" style="font-size:12px;">' + esc(time) + '</td>' +
