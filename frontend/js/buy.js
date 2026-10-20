@@ -146,7 +146,8 @@ buyForm.addEventListener('submit', async function (e) {
         }
         successAlert.textContent = 'Buy order submitted! Your deposit of MWK ' + data.amount_deposited + ' is awaiting approval. Your shares, price and fees will be confirmed when the order is approved.';
         successAlert.classList.add('show');
-        showToast('Buy order submitted successfully!', 'success');
+        successAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Buy order submitted successfully! Your order is now in the queue and awaiting broker approval.', 'success', 60000);
         buyForm.reset();
         updateSummary();
         btn.disabled = false;

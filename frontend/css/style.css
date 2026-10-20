@@ -1122,50 +1122,43 @@ table.data-table td.mono { font-family: var(--font-mono); }
   padding: 48px 24px;
   color: var(--slate);
 }
-
 /* ---------- Toast notifications ---------- */
 #toastContainer {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  max-width: 520px;
+  pointer-events: none;
 }
 
 .toast {
-  min-width: 260px;
-  max-width: 360px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 500;
-  box-shadow: 0 8px 24px rgba(10, 37, 64, 0.18);
+  width: 100%;
+  padding: 18px 22px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(10, 37, 64, 0.3);
   color: #fff;
   opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform: translateY(24px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: auto;
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 .toast-success { background: var(--green); }
-.toast-error { background: var(--red); }
-
-.nav-badge {
-    display: inline-block;
-    min-width: 20px;
-    margin-left: 8px;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: #dc2626;
-    color: #fff;
-    font-size: 11.5px;
-    font-weight: 700;
-    line-height: 18px;
-    text-align: center;
-}
+.toast-error { background: var(--red);
+ }

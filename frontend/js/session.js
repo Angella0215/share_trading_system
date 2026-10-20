@@ -58,11 +58,9 @@ async function authFetch(url, options = {}) {
 
     return res;
 }
-// Shows a floating notification in the top-right corner that
-// automatically fades away after a few seconds. Use for quick
-// confirmations on pages with multiple actions (like approvals),
-// where an inline banner is easy to miss.
-function showToast(message, type = 'success') {
+// Shows a floating notification in the top-right corner. It fades away after
+// "duration" milliseconds (default 10 seconds) or when the user clicks it.
+function showToast(message, type = 'success', duration = 60000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -73,6 +71,8 @@ function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = 'toast toast-' + type;
     toast.textContent = message;
+    toast.style.cursor = 'pointer';
+    toast.title = 'Click to dismiss';
     container.appendChild(toast);
 
     // Trigger the fade-in on the next frame so the CSS transition runs.
@@ -80,13 +80,17 @@ function showToast(message, type = 'success') {
         toast.classList.add('show');
     });
 
-    setTimeout(function () {
+    function dismiss() {
         toast.classList.remove('show');
         setTimeout(function () {
             toast.remove();
         }, 300);
-    }, 6000);
+    }
+
+    toast.addEventListener('click', dismiss);
+    setTimeout(dismiss, duration);
 }
+
 // Shows an unread-message badge on the sidebar "Messages" link and pops up
 // a notice when a new message arrives while the page is open.
 (function () {
