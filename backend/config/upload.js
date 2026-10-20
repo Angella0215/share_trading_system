@@ -25,4 +25,21 @@ const upload = multer({
     }
 });
 
+const uploadPdf = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max per file
+    fileFilter: function (req, file, cb) {
+        const extValid = path.extname(file.originalname).toLowerCase() === '.pdf';
+        const typeValid = file.mimetype === 'application/pdf';
+        if (extValid && typeValid) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF files are allowed for account documents.'));
+        }
+    }
+});
+
+module.exports = upload;
+module.exports.pdfOnly = uploadPdf;
+
 module.exports = upload;

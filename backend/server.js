@@ -30,6 +30,18 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/statements', statementRoutes);
 app.use('/api/audit', auditRoutes);
 
+
+// Turns upload errors (wrong file type, file too large) into a readable JSON message.
+app.use((err, req, res, next) => {
+    if (err) {
+        const message = err.code === 'LIMIT_FILE_SIZE'
+            ? 'Each file must be 5 MB or smaller.'
+            : err.message;
+        return res.status(400).json({ message });
+    }
+    next();
+});
+
 app.get('/', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT 1 + 1 AS result');

@@ -330,23 +330,31 @@
           </div>
         </div>
 
-        <div class="card" style="margin-bottom:24px;">
-          <div class="card-header"><div class="card-title">Required documents</div></div>
+       <div class="card" style="margin-bottom:24px;">
+  <div class="card-header"><div class="card-title">Required documents</div></div>
 
-          <div class="field">
-            <label for="utility_receipt">Utility bill / receipt *</label>
-            <input type="file" id="utility_receipt" name="utility_receipt" accept=".pdf,.jpg,.jpeg,.png">
-          </div>
-          <div class="field">
-            <label for="bank_statement">Bank statement *</label>
-            <input type="file" id="bank_statement" name="bank_statement" accept=".pdf,.jpg,.jpeg,.png">
-          </div>
-          <div class="field">
-            <label for="id_document">Copy of National ID *</label>
-            <input type="file" id="id_document" name="id_document" accept=".pdf,.jpg,.jpeg,.png">
-          </div>
-        </div>
+  <div style="background:#FFF7E0; border:1px solid #F2D98B; color:#7A5B00; padding:12px 16px; border-radius:8px; font-size:13.5px; line-height:1.6; margin-bottom:18px;">
+    <strong>Only PDF files are accepted.</strong>
+    <ul style="margin:6px 0 0 18px; padding:0;">
+      <li>Each document must be a <strong>.pdf</strong> file. Photos (JPG, PNG) and Word files will be rejected.</li>
+      <li>Each file must be <strong>5 MB or smaller</strong>.</li>
+      <li>If you only have a photo, scan it or save it as PDF first (most phones can do this with a "scan document" feature).</li>
+    </ul>
+  </div>
 
+  <div class="field">
+    <label for="utility_receipt">Utility bill / receipt (PDF only) *</label>
+    <input type="file" id="utility_receipt" name="utility_receipt" accept=".pdf,application/pdf">
+  </div>
+  <div class="field">
+    <label for="bank_statement">Bank statement (PDF only) *</label>
+    <input type="file" id="bank_statement" name="bank_statement" accept=".pdf,application/pdf">
+  </div>
+  <div class="field">
+    <label for="id_document">Copy of National ID (PDF only) *</label>
+    <input type="file" id="id_document" name="id_document" accept=".pdf,application/pdf">
+  </div>
+</div>
         <div class="alert alert-error" id="errorAlert"></div>
         <div class="alert alert-success" id="successAlert"></div>
 

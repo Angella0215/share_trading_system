@@ -6,7 +6,7 @@ const { verifyToken, requireRole } = require('../middleware/authMiddleware');
 
 router.post(
     '/open-account',
-    upload.fields([
+    upload.pdfOnly.fields([
         { name: 'utility_receipt', maxCount: 1 },
         { name: 'bank_statement', maxCount: 1 },
         { name: 'id_document', maxCount: 1 }

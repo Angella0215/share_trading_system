@@ -93,6 +93,36 @@ accountForm.addEventListener('submit', async function (e) {
         errorAlert.classList.add('show');
         return;
     }
+        const docs = [
+        { label: 'Utility bill / receipt', file: utilityFile },
+        { label: 'Bank statement', file: bankFile },
+        { label: 'Copy of National ID', file: idFile }
+    ];
+
+    for (const doc of docs) {
+        const isPdf = doc.file.name.toLowerCase().endsWith('.pdf') && doc.file.type === 'application/pdf';
+        if (!isPdf) {
+            errorAlert.textContent = doc.label + ' must be a PDF file. "' + doc.file.name + '" is not a PDF.';
+            errorAlert.classList.add('show');
+            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        if (doc.file.size > 5 * 1024 * 1024) {
+            errorAlert.textContent = doc.label + ' is too large. Each file must be 5 MB or smaller.';
+            errorAlert.classList.add('show');
+            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
+    // Last chance to check the details before the application is sent.
+    const confirmed = confirm(
+        'Are you sure you want to submit your account application?\n\n' +
+        'Please check that your personal details and documents are correct. ' +
+        'You can only submit one application, and you will not be able to edit it afterwards.'
+    );
+    if (!confirmed) {
+        return;
+    }
 
     // Build the multipart form data - text fields plus files together.
     const formData = new FormData();
