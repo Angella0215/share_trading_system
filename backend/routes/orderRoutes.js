@@ -19,6 +19,7 @@ router.put('/sell/:sell_id/cancel', verifyToken, requireRole('investor'), orderC
 router.get('/deal-note/:transaction_id', verifyToken, requireRole('investor'), orderController.getDealNote);
 router.put('/buy/:order_id/reject', verifyToken, requireRole('broker'), orderController.rejectBuyOrder);
 router.put('/sell/:sell_id/reject', verifyToken, requireRole('broker'), orderController.rejectSellOrder);
+router.get('/history', verifyToken, requireRole('broker'), orderController.getOrderHistory);
 
 
 module.exports = router;

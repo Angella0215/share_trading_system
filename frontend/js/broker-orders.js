@@ -8,6 +8,7 @@ if (currentUser) {
     document.getElementById('userAvatar').textContent = currentUser.fullname.charAt(0).toUpperCase();
     loadBuyOrders();
     loadSellOrders();
+    loadCompleted();
 }
 
 function fileUrl(path) {
@@ -134,6 +135,7 @@ async function runApproval(endpoint, reloadFn) {
         if (res.ok) {
             showToast(data.message, 'success');
             reloadFn();
+            loadCompleted();
         } else {
             showToast(data.message || 'Approval failed.', 'error');
         }
@@ -170,10 +172,71 @@ async function runReject(endpoint, reloadFn) {
         if (res.ok) {
             showToast(data.message, 'success');
             reloadFn();
+            loadCompleted();
         } else {
             showToast(data.message || 'Could not cancel the order.', 'error');
         }
     } catch (err) {
         showToast('Could not reach the server.', 'error');
+    }
+}
+
+function escHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+}
+
+async function loadCompleted() {
+    const wrap = document.getElementById('completedWrap');
+
+    try {
+        const res = await fetch(API_BASE + '/orders/history', { headers: getAuthHeaders() });
+        const orders = await res.json();
+
+        if (!res.ok) {
+            wrap.innerHTML = '<div class="empty-state">' + escHtml(orders.message || 'Could not load completed orders.') + '</div>';
+            return;
+        }
+
+        if (orders.length === 0) {
+            wrap.innerHTML = '<div class="empty-state">No completed orders yet.</div>';
+            return;
+        }
+
+        // Newest activity first; show the latest 10 only.
+        const recent = orders.slice().sort(function (a, b) {
+            return new Date(b.closed_at || b.created_at) - new Date(a.closed_at || a.created_at);
+        }).slice(0, 10);
+
+        let html = '<table class="data-table"><thead><tr>' +
+            '<th>Order</th><th>Investor</th><th>Company</th><th>Shares</th><th>Amount</th><th>Outcome</th><th>Handled by</th><th>Closed</th>' +
+            '</tr></thead><tbody>';
+
+        recent.forEach(function (o) {
+            const outcome = o.status === 'rejected' ? 'Cancelled' : 'Approved';
+            const closer = o.status === 'approved' ? (o.final_approver || o.closed_by) : o.closed_by;
+            const amount = o.total_amount != null ? o.total_amount : o.amount_deposited;
+            const closed = o.closed_at
+                ? new Date(o.closed_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                : '-';
+
+            html += '<tr>' +
+                '<td style="text-transform:capitalize;">' + escHtml(o.type) + ' #' + escHtml(o.id) + '</td>' +
+                '<td>' + escHtml(o.investor_name) + '</td>' +
+                '<td>' + escHtml(o.company_name) + ' <span class="mono">(' + escHtml(o.ticker) + ')</span></td>' +
+                '<td class="mono">' + (o.quantity != null ? Number(o.quantity).toLocaleString() : '-') + '</td>' +
+                '<td class="mono">' + (amount != null ? 'MWK ' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-') + '</td>' +
+                '<td><span class="status-pill status-' + escHtml(o.status) + '">' + outcome + '</span></td>' +
+                '<td>' + escHtml(closer || '-') + '</td>' +
+                '<td style="font-size:12px;">' + escHtml(closed) + '</td>' +
+                '</tr>';
+        });
+
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+
+    } catch (err) {
+        wrap.innerHTML = '<div class="empty-state">Could not load completed orders.</div>';
     }
 }

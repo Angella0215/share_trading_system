@@ -740,3 +740,56 @@ exports.rejectSellOrder = async (req, res) => {
         res.status(500).json({ message: 'Server error: ' + error.message });
     }
 };
+
+exports.getOrderHistory = async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT * FROM (
+                SELECT 'buy' AS type, bo.order_id AS id, bo.status, bo.created_at,
+                       bo.amount_deposited, bo.quantity, bo.price, bo.total_amount,
+                       c.company_name, c.ticker,
+                       CONCAT(i.firstname, ' ', i.surname) AS investor_name,
+                       u1.fullname AS first_approver, bo.first_approved_at,
+                       u2.fullname AS final_approver,
+                       (SELECT a.created_at FROM audit_log a WHERE a.entity_type = 'buy_order' AND a.entity_id = bo.order_id
+                         AND a.action IN ('final_approved', 'order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS closed_at,
+                       (SELECT a.user_name FROM audit_log a WHERE a.entity_type = 'buy_order' AND a.entity_id = bo.order_id
+                         AND a.action IN ('final_approved', 'order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS closed_by,
+                       (SELECT a.details FROM audit_log a WHERE a.entity_type = 'buy_order' AND a.entity_id = bo.order_id
+                         AND a.action IN ('order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS close_note
+                FROM buy_orders bo
+                JOIN companies c ON bo.company_id = c.company_id
+                JOIN investors i ON bo.investor_id = i.investor_id
+                LEFT JOIN users u1 ON bo.first_approver_id = u1.user_id
+                LEFT JOIN users u2 ON bo.broker_id = u2.user_id
+                WHERE bo.status IN ('approved', 'rejected')
+
+                UNION ALL
+
+                SELECT 'sell' AS type, so.sell_id AS id, so.status, so.created_at,
+                       NULL AS amount_deposited, so.quantity, so.price, so.total_amount,
+                       c.company_name, c.ticker,
+                       CONCAT(i.firstname, ' ', i.surname) AS investor_name,
+                       u1.fullname AS first_approver, so.first_approved_at,
+                       u2.fullname AS final_approver,
+                       (SELECT a.created_at FROM audit_log a WHERE a.entity_type = 'sell_order' AND a.entity_id = so.sell_id
+                         AND a.action IN ('final_approved', 'order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS closed_at,
+                       (SELECT a.user_name FROM audit_log a WHERE a.entity_type = 'sell_order' AND a.entity_id = so.sell_id
+                         AND a.action IN ('final_approved', 'order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS closed_by,
+                       (SELECT a.details FROM audit_log a WHERE a.entity_type = 'sell_order' AND a.entity_id = so.sell_id
+                         AND a.action IN ('order_rejected', 'order_cancelled') ORDER BY a.log_id DESC LIMIT 1) AS close_note
+                FROM sell_orders so
+                JOIN companies c ON so.company_id = c.company_id
+                JOIN investors i ON so.investor_id = i.investor_id
+                LEFT JOIN users u1 ON so.first_approver_id = u1.user_id
+                LEFT JOIN users u2 ON so.broker_id = u2.user_id
+                WHERE so.status IN ('approved', 'rejected')
+             ) history
+             ORDER BY created_at DESC
+             LIMIT 1000`
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error: ' + error.message });
+    }
+};
