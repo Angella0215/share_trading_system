@@ -823,45 +823,6 @@ a:hover { text-decoration: underline; }
   transform: translateY(-2px);
 }
 
-#subscribeForm {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-#subscribeForm input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  font-size: 13px;
-}
-
-#subscribeForm input::placeholder {
-  color: #9FC1E8;
-}
-
-#subscribeForm input:focus {
-  outline: none;
-  border-color: var(--brand);
-}
-
-#subscribeForm button {
-  padding: 10px 16px;
-  background: var(--brand);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-#subscribeForm button:hover {
-  background: var(--brand-dark);
-}
-
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 20px;
