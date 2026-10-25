@@ -142,8 +142,14 @@ exports.getMyAccount = async (req, res) => {
 
         const investor = investorRows[0];
 
-        const [portfolioRows] = await db.query(
-            `SELECT p.company_id, p.shares_owned, c.company_name, c.ticker, c.current_price
+                const [portfolioRows] = await db.query(
+            `SELECT p.company_id, p.shares_owned, c.company_name, c.ticker, c.current_price,
+                    (SELECT MIN(t.transaction_date) FROM transactions t
+                      WHERE t.investor_id = p.investor_id AND t.company_id = p.company_id AND t.type = 'buy') AS first_bought,
+                    (SELECT MAX(t.transaction_date) FROM transactions t
+                      WHERE t.investor_id = p.investor_id AND t.company_id = p.company_id AND t.type = 'buy') AS last_bought,
+                    (SELECT COUNT(*) FROM transactions t
+                      WHERE t.investor_id = p.investor_id AND t.company_id = p.company_id AND t.type = 'buy') AS purchase_count
              FROM portfolio p
              JOIN companies c ON p.company_id = c.company_id
              WHERE p.investor_id = ?`,

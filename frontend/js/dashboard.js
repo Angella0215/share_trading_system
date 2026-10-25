@@ -54,7 +54,7 @@ function renderPortfolioTable(portfolio) {
     }
 
     let html = '<table class="data-table"><thead><tr>' +
-        '<th>Company</th><th>Ticker</th><th>Shares owned</th><th>Current price</th><th>Value</th>' +
+       '<th>Company</th><th>Ticker</th><th>Shares bought</th><th>Current price</th><th>Value</th>' +
         '</tr></thead><tbody>';
 
     portfolio.forEach(function (p) {
