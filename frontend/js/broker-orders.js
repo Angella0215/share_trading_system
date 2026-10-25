@@ -20,22 +20,31 @@ function fileUrl(path) {
 function buildActionCell(item, idField, firstFn, finalFn) {
     const rejectFn = firstFn.indexOf('Buy') !== -1 ? 'rejectBuy' : 'rejectSell';
     const cancelBtn = ' <button class="btn btn-outline btn-sm" onclick="' + rejectFn + '(' + item[idField] + ')">Cancel</button>';
-    const waiting = '<span style="color:var(--slate); font-size:12px;">Waiting in line (first-come, first-served)</span>';
+    const note = function (text) {
+        return '<div style="color:var(--slate); font-size:12px; max-width:230px; margin-bottom:6px;">' + text + '</div>';
+    };
 
     let actionCell = '';
+
     if (item.status === 'pending') {
         actionCell = item._isNext
             ? '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>'
-            : waiting;
+            : note('Waiting for earlier orders to be first-approved (first-come, first-served).');
+
     } else if (item.status === 'first_approved') {
-        if (item.first_approver_id == currentUser.user_id) {
-            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>';
+        const iGaveFirst = item.first_approver_id == currentUser.user_id;
+
+        if (item._isNext && !iGaveFirst) {
+            actionCell = '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>';
+        } else if (item._isNext && iGaveFirst) {
+            actionCell = note('You gave first approval. A different broker must give final approval.');
+        } else if (iGaveFirst) {
+            actionCell = note('You gave first approval. Waiting for earlier orders to be finalized, then a different broker finalizes this one.');
         } else {
-            actionCell = item._isNext
-                ? '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>'
-                : waiting;
+            actionCell = note('Waiting for earlier orders to be finalized first (first-come, first-served).');
         }
     }
+
     return actionCell + cancelBtn;
 }
 
