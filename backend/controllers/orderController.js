@@ -2,15 +2,19 @@ const db = require('../config/db');
 
 const { logAudit } = require('../utils/audit');
 
-// First-come, first-served: returns true (and sends the error) if this order
-// is not the oldest one waiting at this stage for its company.
+// First-come, first-served: one queue for all buy orders and one for all sell orders,
+// whatever the company. Returns true (and sends the error) if this order is not
+// the oldest one waiting at this stage.
 async function blockIfNotQueueHead(req, res, table, idCol, order, status, entityType) {
     const orderId = order[idCol];
     const [rows] = await db.query(
-        `SELECT ${idCol} AS id, created_at FROM ${table}
-         WHERE company_id = ? AND status = ?
-         ORDER BY created_at ASC, ${idCol} ASC LIMIT 1`,
-        [order.company_id, status]
+        `SELECT t.${idCol} AS id, c.company_name
+         FROM ${table} t
+         JOIN companies c ON t.company_id = c.company_id
+         WHERE t.status = ?
+         ORDER BY t.created_at ASC, t.${idCol} ASC
+         LIMIT 1`,
+        [status]
     );
 
     if (rows.length > 0 && Number(rows[0].id) !== Number(orderId)) {
@@ -18,7 +22,7 @@ async function blockIfNotQueueHead(req, res, table, idCol, order, status, entity
             'Tried to process order #' + orderId + ' before earlier order #' + rows[0].id);
         res.status(409).json({
             message: 'Orders are handled first-come, first-served. Earlier order #' + rows[0].id +
-                ' for this company must be processed first.'
+                ' (' + rows[0].company_name + ') must be processed first.'
         });
         return true;
     }

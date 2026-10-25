@@ -20,18 +20,23 @@ function fileUrl(path) {
 function buildActionCell(item, idField, firstFn, finalFn) {
     const rejectFn = firstFn.indexOf('Buy') !== -1 ? 'rejectBuy' : 'rejectSell';
     const cancelBtn = ' <button class="btn btn-outline btn-sm" onclick="' + rejectFn + '(' + item[idField] + ')">Cancel</button>';
+    const waiting = '<span style="color:var(--slate); font-size:12px;">Waiting in line (first-come, first-served)</span>';
 
     let actionCell = '';
     if (item.status === 'pending') {
-        actionCell = '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>' + cancelBtn;
+        actionCell = item._isNext
+            ? '<button class="btn btn-success btn-sm" onclick="' + firstFn + '(' + item[idField] + ')">First Approve</button>'
+            : waiting;
     } else if (item.status === 'first_approved') {
         if (item.first_approver_id == currentUser.user_id) {
-            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>' + cancelBtn;
+            actionCell = '<span style="color:var(--slate); font-size:12px;">Awaiting a different approver</span>';
         } else {
-            actionCell = '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>' + cancelBtn;
+            actionCell = item._isNext
+                ? '<button class="btn btn-primary btn-sm" onclick="' + finalFn + '(' + item[idField] + ')">Final Approve</button>'
+                : waiting;
         }
     }
-    return actionCell;
+    return actionCell + cancelBtn;
 }
 
 async function loadBuyOrders() {
@@ -49,7 +54,7 @@ async function loadBuyOrders() {
         let html = '<table class="data-table"><thead><tr>' +
             '<th>Investor</th><th>Company</th><th>Amount deposited</th><th>Proof</th><th>Status</th><th></th>' +
             '</tr></thead><tbody>';
-
+        markNext(orders);
         orders.forEach(function (o) {
             const actionCell = buildActionCell(o, 'order_id', 'firstApproveBuy', 'finalApproveBuy');
 
@@ -86,7 +91,7 @@ async function loadSellOrders() {
         let html = '<table class="data-table"><thead><tr>' +
              '<th>Investor</th><th>Company</th><th>Quantity</th><th>Pricing</th><th>Status</th><th></th>' +
             '</tr></thead><tbody>';
-
+        markNext(orders);
         orders.forEach(function (o) {
             const actionCell = buildActionCell(o, 'sell_id', 'firstApproveSell', 'finalApproveSell');
 
@@ -239,4 +244,22 @@ async function loadCompleted() {
     } catch (err) {
         wrap.innerHTML = '<div class="empty-state">Could not load completed orders.</div>';
     }
+}
+
+// Orders arrive oldest first. The first 'pending' order and the first
+// 'first_approved' order are the ones that may be processed next.
+function markNext(orders) {
+    let pendingSeen = false;
+    let firstApprovedSeen = false;
+
+    orders.forEach(function (o) {
+        o._isNext = false;
+        if (o.status === 'pending' && !pendingSeen) {
+            o._isNext = true;
+            pendingSeen = true;
+        } else if (o.status === 'first_approved' && !firstApprovedSeen) {
+            o._isNext = true;
+            firstApprovedSeen = true;
+        }
+    });
 }
